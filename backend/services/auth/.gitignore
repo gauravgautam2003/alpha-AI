@@ -1,0 +1,41 @@
+# -----------------------------------------------------------------------------
+# Pure Node.js Project .gitignore
+# -----------------------------------------------------------------------------
+
+# Dependencies
+node_modules/
+
+# Secrets and Local Configurations
+.env
+.serviceAccountKey.json
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Runtime data & Process IDs
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Test Coverage
+coverage/
+*.lcov
+
+# Build Outputs (Uncomment if using TypeScript/Babel)
+# dist/
+# build/
+
+# Local Dev Tool Caches
+.eslintcache
+.node_repl_history
+
+# OS Files
+.DS_Store
+Thumbs.db
