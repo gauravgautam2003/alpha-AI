@@ -7,16 +7,17 @@ import { createConversation } from '../features/createConversation';
 import { addConversation, setConversationTitle, setSelectedConversation } from '../redux/conversationSlice';
 import { updateConversation } from '../features/updateConversation';
 
-function ChatInput() {
-    const [value, setValue] = useState("");
+function ChatInput({ draft, onDraftChange }) {
     const { selectedConversation } = useSelector(state => state.conversation);
     const [selectedAgent, setSelectedAgent] = useState("Auto");
-    const { messages } = useSelector(state => state.message);
     const dispatch = useDispatch();
 
 
     const handleSendMessage = async () => {
+        const value = draft.trim();
+        if (!value) return;
         let conversation = selectedConversation;
+
         if (!conversation) {
             const conv = await createConversation();
             dispatch(setSelectedConversation(conv));
@@ -25,16 +26,19 @@ function ChatInput() {
         }
 
         if (conversation.title == "New Chat") {
-            const conv = await updateConversation({ id: conversation?._id, title: value.trim() });
+            await updateConversation({ id: conversation?._id, title: value });
             dispatch(setConversationTitle({ conversationId: conversation._id, title: value.slice(0, 40) }))
         }
+
+
         const payload = {
-            prompt: value.trim(),
-            conversationId: conversation?._id
+            prompt: value,
+            conversationId: conversation?._id,
+            agent: selectedAgent.toLowerCase()
         }
 
-        dispatch(addMessage({ role: "user", content: value.trim() }))
-        setValue("")
+        dispatch(addMessage({ role: "user", content: value }))
+        onDraftChange("")
 
         const data = await sendMessage(payload)
         const responseText = typeof data === 'string'
@@ -82,44 +86,56 @@ function ChatInput() {
         }
     ]
     return (
-        <div className='w-full overflow-hidden px-3 md:px-5 py-4 border-t border-white/[0.08] bg-[#0d0f14] shrink-0'>
-            <div className='flex flex-col gap-2 bg-white/[0.03] border border-white/[0.07] rounded-[10px] px-4 pt-3.5 pb-3'>
-                <div className='flex max-w-[80%] gap-2 flex-wrap pr-3'>
+        <div className='w-full overflow-hidden px-3 md:px-6 pb-5 pt-2 shrink-0'>
+            <div className='mirror-surface max-w-4xl mx-auto flex flex-col gap-3 rounded-3xl px-4 pt-3.5 pb-3'>
+                <div className='flex gap-2 flex-wrap pr-3'>
                     {agents.map((agent) => {
                         const isActive = selectedAgent === agent.label
                         const Icon = agent.icon
 
                         return (
-                            <div onClick={() => setSelectedAgent(agent.label)} className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border transition-all cursor-pointer
-                            ${isActive ? "bg-linear-to-r from-indigo-500 to-violet-600 text-white border-transperent shadow-[0_1px_8px_rgba(99,102,241,.35)]" : "bg-white/[0.03] text-slate-400 border-white/[0.06] hover:bg-white/[0.07] hover"}`}>
-                                <Icon size={14} className={`${isActive ? 'text-white' : 'text-slate-300'}`} />
-                                <span className={` ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                            <button key={agent.id} type='button' onClick={() => setSelectedAgent(agent.label)} className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[12px] font-semibold border transition-all cursor-pointer
+                            ${isActive ? "blue-action border-transparent" : "glass-button text-slate-500"}`}>
+                                <Icon size={14} className={`${isActive ? 'text-white' : 'text-sky-600'}`} />
+                                <span className={` ${isActive ? 'text-white' : 'text-slate-600'}`}>
                                     {agent.label}
                                 </span>
-                            </div>
+                            </button>
                         )
                     })}
                 </div>
 
                 <textarea
                     placeholder='Ask Anything...'
-                    onChange={(e) => setValue(e.target.value)}
-                    value={value}
-                    className='w-full bg-transparent outline-none resize-none text-[14px] text-slate-200 placeholder:text-slate-600 leading-relaxed [scroll-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50 ' />
+                    onChange={(e) => onDraftChange(e.target.value)}
+                    onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                            event.preventDefault();
+                            handleSendMessage();
+                        }
+                    }}
+                    value={draft}
+                    rows={2}
+                    className='w-full bg-transparent outline-none resize-none text-[15px] text-slate-700 placeholder:text-slate-400 leading-7 [scroll-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50 ' />
 
-                <div className='flex items-center justify-between'>
+                <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-1'>
-                        <button className='flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:textslate-400 hover:bg-white/[0.05] border border-transparent hover:border-white/[0.06] transition-all duration-150 bg-transparent cursor-pointer'>
+                        <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
                             <LuPaperclip size={16} />
                         </button>
-                        <button className='flex items-center justify-center w-8 h-8 rounded-lg text-slate-600 hover:textslate-400 hover:bg-white/[0.05] border border-transparent hover:border-white/[0.06] transition-all duration-150 bg-transparent cursor-pointer'>
+                        <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
                             <LuMic size={16} />
                         </button>
                     </div>
 
-                    <button disabled={!value}
+                    <div className='hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-400'>
+                        <span className='w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(74,222,128,.16)]' />
+                        Alpha model online
+                    </div>
+
+                    <button type='button' disabled={!draft.trim()}
                         onClick={handleSendMessage}
-                        className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded-lg border-none transition-all duration-150 ${value.trim() ? "bg-linear-to-br from-indigo-500 to-violet-700 text-white hover:opacity-90" : "text-slate-600 bg-white/[0.06] cursor-not-allowed"}`}>
+                        className={`flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl border-none transition-all duration-150 ${draft.trim() ? "blue-action" : "text-slate-400 bg-white/40 border border-sky-100 cursor-not-allowed"}`}>
                         <LuSend size={15} />
                     </button>
                 </div>

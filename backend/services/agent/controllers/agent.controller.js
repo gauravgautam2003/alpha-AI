@@ -4,7 +4,7 @@ import { addMessage } from "../config/memory.js";
 
 export const agent = async (req, res) => {
     try {
-        const {prompt, conversationId} = req.body;
+        const {prompt, conversationId, agent} = req.body;
 
         
         if (conversationId) {
@@ -17,7 +17,8 @@ export const agent = async (req, res) => {
 
         const result = await graph.invoke({
             prompt,
-            conversationId
+            conversationId,
+            agent
         });
 
         const response = result.aiResponse;
@@ -33,7 +34,11 @@ export const agent = async (req, res) => {
             });
         }
 
-        return res.status(200).json(response);
+        return res.status(200).json({
+            answer: result.aiResponse,
+            images: result.images
+        });
+        
     } catch (error) {
         return res.status(500).json({
             message: `agent error ${error}`

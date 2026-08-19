@@ -2,33 +2,36 @@ import React from 'react'
 import MessageBubble from './MessageBubble';
 import { useSelector } from 'react-redux';
 
-function MessageArea() {
+function MessageArea({ onSuggestion }) {
     const { selectedConversation } = useSelector(state => state.conversation);
     const { messages } = useSelector(state => state.message);
 
     return (
-        <div className='flex-1 overflow-y-auto px-6 py-6 space-y-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+        <div className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-2'>
             {messages.length == 0 || !selectedConversation ? (
                 <>
-                    <div className='h-[250px] flex flex-col items-center justify-center gap-2 text-center'>
-                        <div className='flex flex-col gap-1.5'>
-                            <h1 className='text-[20px] font-semibold text-state-200 uppercase tracking-tight'>Alpha AI</h1>
-                            <p className='text-[15px] font-semibold text-state-400 tracking-tight'>What can I help you?</p>
-                            <p className='text-[13px] text-state-600 max-w-[260px] leading-relaxed'>Ask me anything - code, ideas, explanations, or just a quick questions.</p>
+                    <div className='min-h-[300px] flex flex-col items-center justify-center gap-5 text-center'>
+                        <div className='mirror-surface flex items-center justify-center w-16 h-16 rounded-[1.35rem] text-sky-700'>
+                            <span className='text-2xl'>✦</span>
+                        </div>
+                        <div className='flex flex-col gap-2'>
+                            <p className='text-[11px] font-bold uppercase tracking-[0.24em] text-sky-500'>Your intelligent workspace</p>
+                            <h1 className='text-2xl md:text-[28px] font-semibold text-sky-950 tracking-tight'>What shall we create today?</h1>
+                            <p className='text-[13px] text-slate-500 max-w-[320px] leading-relaxed mx-auto'>Explore ideas, write code, research a topic, or turn an outline into something useful.</p>
                         </div>
                     </div>
-                    <div className='flex flex-wrap justify-center gap-2 '>
-                        {["Create a Netflix clone", "Explain Redis", "Build a dashboard"].map((s, idx) => (
-                            <div key={s || idx} className='text-[13px] text-slate-400 bg-white/[0.04] border border-white/[0.07] px-3 py-1.5 rounded-lg hover:bg-white/[0.08] hover:text-slate-200 transition-colors duration-150 cursor-pointer'>
+                    <div className='max-w-2xl mx-auto flex flex-wrap justify-center gap-2.5'>
+                        {["Create a Netflix clone", "Explain Redis simply", "Build a modern dashboard", "Help me plan a project"].map((s, idx) => (
+                            <button key={s || idx} type='button' onClick={() => onSuggestion(s)} className='glass-button text-[13px] text-slate-600 px-3.5 py-2 rounded-xl transition-colors duration-150 cursor-pointer'>
                                 {s}
-                            </div>
+                            </button>
                         ))}
 
                     </div>
                 </>
             ) : (
                 <>
-                    <div className='space-y-4'>
+                    <div className='max-w-4xl mx-auto space-y-5 pb-4'>
                         {messages?.map((msg, idx) => (
                             <div key={msg?._id || idx}>
                                 <MessageBubble role={msg?.role} content={msg?.content} />

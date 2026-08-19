@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { LuCoins, LuLogOut, LuMessageSquare, LuPanelLeft, LuPanelRight, LuPlus } from "react-icons/lu";
+import { LuCoins, LuLogOut, LuMessageSquare, LuPanelLeft, LuPanelRight, LuPlus, LuSparkles } from "react-icons/lu";
 import { HiOutlinePencilAlt, HiPlus } from "react-icons/hi";
 import { FaUser } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
@@ -35,7 +35,7 @@ function SideBar() {
     if (collapsed) {
         return (
             <>
-                <div className='hidden lg:flex flex-col items-center w-[56px] h-screen bg-[#0d0f14] border-r border-white/[0.06] py-4 gap-1 shrink-0'>
+                <div className='glass-panel sidebar-glass hidden lg:flex flex-col items-center w-[56px] h-screen border-r border-white/70 py-4 gap-1 shrink-0'>
                     <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
                         onClick={() => setCollapsed(false)}
                     >
@@ -80,28 +80,28 @@ function SideBar() {
         )
     }
     return (
-        <div className='fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 bg-[#0d0f14] border-r border-white/[0.06]'>
+        <aside className='glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 border-r border-white/70'>
             <div className='flex flex-col h-full'>
-                <div className='flex items-center gap-2.5 px-4 py-4 border-b border-white/[0.06]'>
-                    <div className='hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transitions-colors duration-150 bg-transparent border-none cursor-pointer'
+                <div className='flex items-center gap-2.5 px-4 py-4 border-b border-sky-100/80'>
+                    <button type='button' className='icon-control hidden lg:flex w-7 h-7 rounded-lg'
                         onClick={() => setCollapsed(true)}
                     >
                         <LuPanelLeft />
+                    </button>
+                    <div className='premium-mark shrink-0'><LuSparkles size={15} /></div>
+                    <div className='min-w-0 flex-1 leading-none'>
+                        <span className='block text-[14px] font-bold text-slate-800 tracking-tight'>ALPHA AI</span>
+                        <span className='block mt-1 text-[9px] font-semibold text-sky-500 uppercase tracking-[0.14em]'>Creative studio</span>
                     </div>
-                    <span className='text-[16px] font-semibold text-slate-100 tracking-tight flex-1 '>
-                        ALPHA AI
-                    </span>
-                    <span className='text-[10px] font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full tracking-wide '>
-                        free
-                    </span>
-                    <button className='flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transitions-colors duration-150 bg-transparent border-none cursor-pointer'
+                    <span className='premium-label text-[9px] font-bold px-2 py-1 rounded-full tracking-wide uppercase'>Beta</span>
+                    <button type='button' className='icon-control w-7 h-7 rounded-lg'
                         onClick={() => dispatch(setSelectedConversation(null))}>
                         <HiOutlinePencilAlt size={14} />
                     </button>
                 </div>
 
                 <div className='px-4 pt-4 pb-1'>
-                    <button className='w-full flex items-center justify-center gap-2 text-sm font-medium text-white bg-linear-to-br from-indigo-500 to-violet-700 rounded-xl py-[10px] border-none cursor-pointer hover:opacity-90 transition-opacity duration-150'
+                    <button className='blue-action w-full flex items-center justify-center gap-2 text-sm font-semibold rounded-xl py-[11px] border-none cursor-pointer transition-all duration-150'
                         onClick={() => dispatch(setSelectedConversation(null))}
                     >
                         <HiPlus />
@@ -182,7 +182,7 @@ function SideBar() {
                     )}
                 </div>
             </div>
-        </div>
+        </aside>
     )
 }
 

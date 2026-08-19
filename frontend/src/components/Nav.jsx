@@ -1,27 +1,30 @@
 import React from 'react'
-import { LuMessageSquare } from 'react-icons/lu'
+import { LuEllipsis, LuMessageSquare, LuShare2, LuSparkles } from 'react-icons/lu'
 import { useSelector } from 'react-redux'
 
 function Nav() {
     const { selectedConversation } = useSelector(state => state.conversation);
     const { messages } = useSelector(state => state.message);
 
+    if (!selectedConversation) return null;
+
     return (
-        <>
-            {selectedConversation && (
-                <div className='h-14 flex items-center px-5 border-b gap-2.5 border-white/[0.06] bg-[#0d0f14]'>
-                    <div className='flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20'>
-                        <LuMessageSquare size={13} className='text-indigo-400' />
-                    </div>
-                    <div className='text-[14px] font-medium text-slate-100 tracking-tight'>
-                        {selectedConversation?.title || "New Chat"}
-                    </div>
-                    <div className='text-[10px] font-medium text-slate-600 bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-full'>
-                        {messages?.length} Messages
-                    </div>
+        <header className='glass-subtle h-16 flex items-center px-4 md:px-6 border-b gap-3 border-sky-100/80'>
+            <div className='flex items-center justify-center w-8 h-8 rounded-xl bg-sky-100/80 border border-sky-200'>
+                <LuMessageSquare size={15} className='text-sky-700' />
+            </div>
+            <div className='min-w-0 flex-1'>
+                <div className='text-[14px] font-semibold text-slate-700 tracking-tight truncate'>
+                    {selectedConversation?.title || "New Chat"}
                 </div>
-            )}
-        </>
+                <div className='text-[10px] font-medium text-slate-400 mt-0.5'>AI workspace</div>
+            </div>
+            <div className='hidden sm:flex items-center text-[10px] font-semibold text-sky-700 bg-sky-100/65 border border-sky-200 px-2.5 py-1 rounded-full'>
+                <LuSparkles size={11} className='mr-1' /> {messages?.length || 0} messages
+            </div>
+            <button className='icon-control hidden sm:inline-flex' type='button' aria-label='Share conversation'><LuShare2 size={15} /></button>
+            <button className='icon-control' type='button' aria-label='Conversation options'><LuEllipsis size={17} /></button>
+        </header>
     )
 }
 

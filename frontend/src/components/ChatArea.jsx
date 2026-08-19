@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Nav from './Nav'
 import MessageList from "./MessageList"
 import ChatInput from './ChatInput'
@@ -9,6 +9,7 @@ import { setMessage } from '../redux/messageSlice'
 function ChatArea() {
     const { selectedConversation } = useSelector(state => state.conversation);
     const dispatch = useDispatch();
+    const [draft, setDraft] = useState("");
 
     useEffect(() => {
         const getMsg = async () => {
@@ -22,11 +23,11 @@ function ChatArea() {
         
     }, [selectedConversation?._id])
     return (
-        <div className='flex-1 flex flex-col'>
+        <main className='relative flex-1 min-w-0 flex flex-col'>
             <Nav />
-            <MessageList />
-            <ChatInput />
-        </div>
+            <MessageList onSuggestion={setDraft} />
+            <ChatInput draft={draft} onDraftChange={setDraft} />
+        </main>
     )
 }
 
