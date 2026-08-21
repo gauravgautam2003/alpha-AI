@@ -43,9 +43,9 @@ function ChatInput({ draft, onDraftChange }) {
         const data = await sendMessage(payload)
         const responseText = typeof data === 'string'
             ? data
-            : (data?.aiResponse || data?.content || data?.text || data?.message || JSON.stringify(data));
+            : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
 
-        dispatch(addMessage({ role: "assistant", content: responseText }))
+        dispatch(addMessage({ role: "assistant", content: responseText , images: data.images}))
     }
 
     const agents = [

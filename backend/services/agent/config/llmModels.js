@@ -8,7 +8,9 @@ import dotenv from "dotenv"
 dotenv.config({ quiet: true })
 
 const groq = new ChatGroq({
-    model: "llama-3.3-70b-versatile",
+    // Groq retired llama-3.3-70b-versatile for free and developer-tier keys
+    // on 2026-08-16. GPT-OSS 120B is Groq's recommended replacement.
+    model: "openai/gpt-oss-120b",
     apiKey: process.env.GROQ_API_KEY,
 })
 

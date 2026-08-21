@@ -34,7 +34,7 @@ function MessageArea({ onSuggestion }) {
                     <div className='max-w-4xl mx-auto space-y-5 pb-4'>
                         {messages?.map((msg, idx) => (
                             <div key={msg?._id || idx}>
-                                <MessageBubble role={msg?.role} content={msg?.content} />
+                                <MessageBubble role={msg?.role} content={msg?.content} images={msg.images || []} />
                             </div>
                         ))}
                     </div>
