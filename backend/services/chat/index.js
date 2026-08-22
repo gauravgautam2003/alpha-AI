@@ -1,14 +1,12 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import dns from "dns";
 import chatRouter from "./routes/chat.route.js";
 
-dotenv.config({ quiet: true });
-
 dns.setServers(["8.8.4.4", "8.8.8.8"]);
 
-const PORT = process.env.PORT || 5001
+const PORT = process.env.PORT || 5002
 
 const app = express();
 app.use(express.json());

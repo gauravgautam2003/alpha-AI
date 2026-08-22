@@ -1,5 +1,6 @@
 import { ChatGroq } from "@langchain/groq"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai"
+import { ChatOpenRouter } from "@langchain/openrouter";
 import dotenv from "dotenv"
 
 // This module is imported while the graph is being created, before index.js
@@ -8,8 +9,6 @@ import dotenv from "dotenv"
 dotenv.config({ quiet: true })
 
 const groq = new ChatGroq({
-    // Groq retired llama-3.3-70b-versatile for free and developer-tier keys
-    // on 2026-08-16. GPT-OSS 120B is Groq's recommended replacement.
     model: "openai/gpt-oss-120b",
     apiKey: process.env.GROQ_API_KEY,
 })
@@ -20,6 +19,11 @@ const gemini = new ChatGoogleGenerativeAI({
     apiKey: process.env.GOOGLE_API_KEY,
 })
 
+const openRouter = new ChatOpenRouter({
+  model: "deepseek/deepseek-chat",
+  temperature: 0,
+  maxTokens: 2500,
+});
 export const getModel = async (agent) => {
     switch (agent) {
         case "chat":
@@ -27,7 +31,7 @@ export const getModel = async (agent) => {
         case "search":
             return groq
         case "coding":
-            return gemini
+            return openRouter
         default:
             return groq
     }

@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LuCoins, LuLogOut, LuMessageSquare, LuPanelLeft, LuPanelRight, LuPlus, LuSparkles } from "react-icons/lu";
 import { HiOutlinePencilAlt, HiPlus } from "react-icons/hi";
 import { FaUser } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
-import { addConversation, setConversations, setSelectedConversation } from '../redux/conversationSlice';
+import { setConversations, setSelectedConversation } from '../redux/conversationSlice';
 import { getConversations } from '../features/getConversations';
-import { createConversation } from '../features/createConversation';
 import { logOut } from '../features/logOut';
 import { setUserData } from '../redux/userSlice';
 
@@ -25,12 +24,16 @@ function SideBar() {
             dispatch(setConversations(data));
         }
         getConv();
-    }, [userData?._id])
+    }, [dispatch, userData?._id])
 
-    const handleCreateConversation = async () => {
-        const data = await createConversation();
-        dispatch(addConversation(data));
-    }
+    const handleLogout = async () => {
+        try {
+            await logOut();
+            dispatch(setUserData(null));
+        } catch (error) {
+            console.error("logout error", error);
+        }
+    };
 
     if (collapsed) {
         return (
@@ -68,7 +71,7 @@ function SideBar() {
                             (userData?.avatar && !imageError) ?
                                 <img className='w-8 h-8 rounded-[10px] object-cover border-2 border-indigo-500/25' src={userData?.avatar} alt={"image"} onError={() => setImageError(true)} />
                                 :
-                                <div className='w-8 h-8 rounded-full object-cover border-2 border-indigo-500/25 flex items-ceter justify-center'>
+                                <div className='w-8 h-8 rounded-full object-cover border-2 border-indigo-500/25 flex items-center justify-center'>
                                     <FaUser size={16} className='text-slate-400 my-1' />
                                 </div>
                         }
@@ -82,7 +85,7 @@ function SideBar() {
     return (
         <aside className='glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 border-r border-white/70'>
             <div className='flex flex-col h-full'>
-                <div className='flex items-center gap-2.5 px-4 py-4 border-b border-sky-100/80'>
+                <div className='flex items-center gap-2.5 px-4 py-4 border-b border-white/10'>
                     <button type='button' className='icon-control hidden lg:flex w-7 h-7 rounded-lg'
                         onClick={() => setCollapsed(true)}
                     >
@@ -154,14 +157,14 @@ function SideBar() {
                                         (userData?.avatar && !imageError) ?
                                             <img className='w-9 h-9 rounded-[10px] object-cover border-2 border-indigo-500/25' src={userData?.avatar} alt={"image"} onError={() => setImageError(true)} />
                                             :
-                                            <div className='w-9 h-9 rounded-full object-cover border-2 border-indigo-500/25 flex items-ceter justify-center'>
+                                            <div className='w-9 h-9 rounded-full object-cover border-2 border-indigo-500/25 flex items-center justify-center'>
                                                 <FaUser size={20} className='text-slate-400 my-1' />
                                             </div>
                                     }
                                 </div>
 
                                 <div className='flex-1 min-w-0'>
-                                    <p className='text-[13.5px] font-semibold text-slate-100 truncate'>{userData?.user.name || "user"}</p>
+                                    <p className='text-[13.5px] font-semibold text-slate-100 truncate'>{userData?.user?.name || "user"}</p>
                                     <p className='text-[11px] text-slate-600 mt-px'>{"Free Plan"}</p>
                                 </div>
                                 <div className='flex gap-1'>
@@ -169,10 +172,7 @@ function SideBar() {
                                         <LuCoins size={16} />
                                     </button>
                                     <button className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'
-                                        onClick={() => {
-                                            logOut();
-                                            dispatch(setUserData(null))
-                                        }}
+                                        onClick={handleLogout}
                                     >
                                         <LuLogOut size={16} />
                                     </button>

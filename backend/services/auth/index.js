@@ -1,10 +1,8 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import router from "./routes/auth.route.js";
 import dns from "dns";
-
-dotenv.config({ quiet: true });
 
 dns.setServers(["8.8.4.4", "8.8.8.8"]);
 

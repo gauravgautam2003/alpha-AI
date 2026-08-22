@@ -17,6 +17,6 @@ router.post("/login", login);
  * @type public
  */
 
-router.get("/logout", logout);
+router.post("/logout", logout);
 
 export default router

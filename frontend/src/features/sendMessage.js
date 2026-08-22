@@ -6,6 +6,6 @@ export const sendMessage = async (payload) => {
         return data;
     } catch (error) {
         console.log(error);
-        return []
+        throw error;
     }
 }

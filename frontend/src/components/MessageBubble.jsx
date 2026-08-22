@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { LuCheck, LuCopy, LuExternalLink, LuX } from 'react-icons/lu';
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighLighter } from "react-syntax-highlighter"

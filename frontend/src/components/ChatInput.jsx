@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
-import { addMessage } from '../redux/messageSlice';
+import { addMessage, setArtifacts } from '../redux/messageSlice';
 import { createConversation } from '../features/createConversation';
 import { addConversation, setConversationTitle, setSelectedConversation } from '../redux/conversationSlice';
 import { updateConversation } from '../features/updateConversation';
@@ -10,42 +10,57 @@ import { updateConversation } from '../features/updateConversation';
 function ChatInput({ draft, onDraftChange }) {
     const { selectedConversation } = useSelector(state => state.conversation);
     const [selectedAgent, setSelectedAgent] = useState("Auto");
+    const [isSending, setIsSending] = useState(false);
+    const [requestError, setRequestError] = useState("");
     const dispatch = useDispatch();
 
 
     const handleSendMessage = async () => {
         const value = draft.trim();
-        if (!value) return;
-        let conversation = selectedConversation;
+        if (!value || isSending) return;
 
-        if (!conversation) {
-            const conv = await createConversation();
-            dispatch(setSelectedConversation(conv));
-            dispatch(addConversation(conv));
-            conversation = conv;
+        setIsSending(true);
+        setRequestError("");
+
+        try {
+            let conversation = selectedConversation;
+
+            if (!conversation) {
+                const conv = await createConversation();
+                if (!conv?._id) {
+                    throw new Error("Conversation could not be created");
+                }
+
+                dispatch(setSelectedConversation(conv));
+                dispatch(addConversation(conv));
+                conversation = conv;
+            }
+
+            if (conversation.title == "New Chat") {
+                await updateConversation({ id: conversation._id, title: value });
+                dispatch(setConversationTitle({ conversationId: conversation._id, title: value.slice(0, 40) }));
+            }
+
+            dispatch(addMessage({ role: "user", content: value }));
+            onDraftChange("");
+
+            const data = await sendMessage({
+                prompt: value,
+                conversationId: conversation._id,
+                agent: selectedAgent.toLowerCase()
+            });
+            const responseText = typeof data === 'string'
+                ? data
+                : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
+
+            dispatch(setArtifacts(data?.artifacts || []));
+            dispatch(addMessage({ role: "assistant", content: responseText, images: data?.images || [] }));
+        } catch (error) {
+            console.error("send message error", error);
+            setRequestError("Message could not be sent. Please try again.");
+        } finally {
+            setIsSending(false);
         }
-
-        if (conversation.title == "New Chat") {
-            await updateConversation({ id: conversation?._id, title: value });
-            dispatch(setConversationTitle({ conversationId: conversation._id, title: value.slice(0, 40) }))
-        }
-
-
-        const payload = {
-            prompt: value,
-            conversationId: conversation?._id,
-            agent: selectedAgent.toLowerCase()
-        }
-
-        dispatch(addMessage({ role: "user", content: value }))
-        onDraftChange("")
-
-        const data = await sendMessage(payload)
-        const responseText = typeof data === 'string'
-            ? data
-            : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
-
-        dispatch(addMessage({ role: "assistant", content: responseText , images: data.images}))
     }
 
     const agents = [
@@ -118,6 +133,8 @@ function ChatInput({ draft, onDraftChange }) {
                     rows={2}
                     className='w-full bg-transparent outline-none resize-none text-[15px] text-slate-700 placeholder:text-slate-400 leading-7 [scroll-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50 ' />
 
+                {requestError && <p role='alert' className='text-xs text-red-400'>{requestError}</p>}
+
                 <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-1'>
                         <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
@@ -133,9 +150,9 @@ function ChatInput({ draft, onDraftChange }) {
                         Alpha model online
                     </div>
 
-                    <button type='button' disabled={!draft.trim()}
+                    <button type='button' disabled={isSending || !draft.trim()}
                         onClick={handleSendMessage}
-                        className={`flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl border-none transition-all duration-150 ${draft.trim() ? "blue-action" : "text-slate-400 bg-white/40 border border-sky-100 cursor-not-allowed"}`}>
+                        className={`flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl border-none transition-all duration-150 ${draft.trim() ? "blue-action" : "text-slate-400 bg-white/10 border border-sky-100 cursor-not-allowed"}`}>
                         <LuSend size={15} />
                     </button>
                 </div>

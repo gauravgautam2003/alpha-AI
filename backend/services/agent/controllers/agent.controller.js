@@ -31,13 +31,15 @@ export const agent = async (req, res) => {
                 conversationId,
                 role: "assistant",
                 content: typeof response === 'string' ? response : JSON.stringify(response),
-                images: result.images
+                images: result.images,
+                artifacts: result?.artifacts
             });
         }
 
         return res.status(200).json({
-            answer: result.aiResponse,
-            images: result.images
+            answer: result?.aiResponse,
+            images: result?.images,
+            artifacts: result?.artifacts
         });
         
     } catch (error) {

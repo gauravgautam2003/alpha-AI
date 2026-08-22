@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true
+    },
+    avatar: {
+        type: String
     }
 },{
     timestamps: true

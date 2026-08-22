@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../utils/firebase"
 import api from '../utils/axios';

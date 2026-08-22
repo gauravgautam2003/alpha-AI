@@ -9,7 +9,7 @@ const chatRouter = express.Router()
  * @type public
  */
 
-chatRouter.get("/create-conversation", createConversation);
+chatRouter.post("/create-conversation", createConversation);
 
 /**
  * @namw get conversation
