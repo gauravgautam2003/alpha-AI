@@ -16,7 +16,7 @@ function MessageBubble({ role, content, images }) {
         setCopyCode(code)
         setTimeout(() => {
             setCopyCode("")
-        }, 200)
+        }, 2000)
     }
     const isUser = role === "user"
 
