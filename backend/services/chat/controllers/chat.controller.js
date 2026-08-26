@@ -41,13 +41,13 @@ export const getConversations = async (req, res) => {
 
 export const updateConversation = async (req, res) => {
     try {
-        const {id, title} = req.body;
+        const { id, title } = req.body;
         const userId = req.headers["x-user-id"];
 
         const conversation = await Conversation.findOneAndUpdate(
             { _id: id, userId },
             { title },
-            { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         );
 
         if (!conversation) {
@@ -58,9 +58,9 @@ export const updateConversation = async (req, res) => {
 
     } catch (error) {
         return res.status(500).json({
-            message:`update conversation error ${error}`
+            message: `update conversation error ${error}`
         });
-        
+
     }
 }
 
@@ -100,10 +100,10 @@ export const getMessage = async (req, res) => {
 
         const messages = await Message.find({
             conversationId: conversation._id
-        }).sort({createdAt: 1});
+        }).sort({ createdAt: 1 });
 
         return res.status(200).json(messages);
-        
+
     } catch (error) {
         return res.status(500).json({
             message: `get message error ${error}`

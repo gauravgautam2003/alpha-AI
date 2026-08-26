@@ -4,9 +4,10 @@ import { addMessage } from "../config/memory.js";
 
 export const agent = async (req, res) => {
     try {
-        const {prompt, conversationId, agent} = req.body;
+        const { prompt, conversationId, agent } = req.body;
+        const userId = req.headers["x-user-id"];
 
-        
+
         if (conversationId) {
             await axios.post(`${process.env.CHAT_SERVICE}/save-message`, {
                 conversationId,
@@ -18,7 +19,8 @@ export const agent = async (req, res) => {
         const result = await graph.invoke({
             prompt,
             conversationId,
-            agent
+            agent,
+            userId
         });
 
         const response = result.aiResponse;
@@ -41,7 +43,7 @@ export const agent = async (req, res) => {
             images: result?.images,
             artifacts: result?.artifacts
         });
-        
+
     } catch (error) {
         return res.status(500).json({
             message: `agent error ${error}`

@@ -5,9 +5,9 @@ import { getMemory } from "../config/memory.js";
 export const chatAgent = async (state) => {
     const llm = await getModel("chat");
 
-    const history = await getMemory(state.conversationId);
+    const history = await getMemory(state.conversationId, state.userId);
 
-    const searchContext = state.searchResults? `Web Search Results: ${JSON.stringify(state.searchResults)} Answer the user only the above search results`: ""
+    const searchContext = state.searchResults ? `Web Search Results: ${JSON.stringify(state.searchResults)} Answer the user only the above search results` : ""
 
     const systemPrompt = `You are Alpha AI, an Intelligence AI assistant.
                         ${searchContext}
@@ -36,11 +36,11 @@ export const chatAgent = async (state) => {
     ]
 
     history.forEach(msg => {
-        if(msg.role == "user") {
-            messages.push(new HumanMessage({content: msg.content}));
+        if (msg.role == "user") {
+            messages.push(new HumanMessage({ content: msg.content }));
         }
-        if(msg.role == "assistant") {
-            messages.push(new AIMessage({content: msg.content}));
+        if (msg.role == "assistant") {
+            messages.push(new AIMessage({ content: msg.content }));
         }
     });
 
