@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 
 /**
- * @name connectDB
- * @description write code for connect with mongodb database
- * @service public
- */
+    * @name connectDB
+        * @description write code for connect with mongodb database
+            * @service public
+                */
 
 async function connectDB() {
     try {

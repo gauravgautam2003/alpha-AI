@@ -34,6 +34,7 @@ workflow.addConditionalEdges("router", (state) => {
             return "pdf"
         case "ppt":
             return "ppt"
+        case "image":
         case "imageGen":
             return "imageGen"
         default:

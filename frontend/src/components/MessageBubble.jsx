@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { LuCheck, LuCopy, LuExternalLink, LuX } from 'react-icons/lu';
+import { LuCheck, LuCopy, LuDownload, LuExternalLink, LuX } from 'react-icons/lu';
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighLighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
+import { AnimatePresence, motion } from "motion/react";
 
 
 
-function MessageBubble({ role, content, images }) {
+function MessageBubble({ role, content, images = [], artifacts = [] }) {
     const [lightBox, setLightBox] = useState(null);
     const [copyCode, setCopyCode] = useState("");
 
@@ -27,7 +28,12 @@ function MessageBubble({ role, content, images }) {
             : String(content ?? '');
 
     return (
-        <div className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}>
+        <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
+            className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}
+        >
             <div className={`w-fit max-w-[92vw] md:max-w-[72%] px-4 py-2.5 rounded-2xl break-words overflow-hidden leading-relaxed
                 ${isUser
                     ? "blue-action text-white rounded-tr-sm"
@@ -37,13 +43,35 @@ function MessageBubble({ role, content, images }) {
                 {images.length > 0 && (
                     <div className='flex flex-wrap mt-4 gap-3'>
                         {images.map((img, idx) => (
-                            <img key={idx}
-                                src={img}
-                                loading='lazy'
-                                onClick={() => setLightBox(img)}
-                                onError={(e) => e.currentTarget.remove()}
-                                className='w-40 h-28 rounded-xl object-cover border border-white/10 cursor-zoom-in hover:opacity-90 transition'
-                            />
+                            <div key={idx}>
+                                <motion.img
+                                    initial={{ opacity: 0, scale: 0.96 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                                    src={img}
+                                    loading='lazy'
+                                    onClick={() => setLightBox(img)}
+                                    onError={(e) => e.currentTarget.remove()}
+                                    className='w-[400px] max-w-full h-auto rounded-xl object-cover border border-white/10 cursor-zoom-in hover:opacity-90 transition'
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {artifacts.length > 0 && (
+                    <div className='flex flex-wrap gap-2 mt-3'>
+                        {artifacts.filter((artifact) => artifact?.url).map((artifact) => (
+                            <a
+                                key={artifact.id || artifact.url}
+                                href={artifact.url}
+                                download
+                                target='_blank'
+                                rel='noreferrer'
+                                className='inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-green-600 bg-transparent border-0 hover:bg-transparent'
+                            >
+                                <LuDownload size={14} />
+                                download {String(artifact.type || "file").toLowerCase()}
+                            </a>
                         ))}
                     </div>
                 )}
@@ -108,7 +136,7 @@ function MessageBubble({ role, content, images }) {
                                             {
                                                 copyCode == value ?
                                                     <>
-                                                        <LuCheck size={14}/>
+                                                        <LuCheck size={14} />
                                                         Copied
                                                     </> :
                                                     <>
@@ -118,17 +146,17 @@ function MessageBubble({ role, content, images }) {
                                             }
                                         </button>
                                     </div>
-                                    <SyntaxHighLighter 
-                                    language={language}
-                                    style={oneDark}
-                                    wrapLongLines
-                                    showLineNumbers
-                                    customStyle={{
-                                        margin: 0,
-                                        padding: "16px",
-                                        background: "#0d1117",
-                                        fontSize: "13px",
-                                    }}
+                                    <SyntaxHighLighter
+                                        language={language}
+                                        style={oneDark}
+                                        wrapLongLines
+                                        showLineNumbers
+                                        customStyle={{
+                                            margin: 0,
+                                            padding: "16px",
+                                            background: "#0d1117",
+                                            fontSize: "13px",
+                                        }}
                                     >
                                         {value}
                                     </SyntaxHighLighter>
@@ -141,16 +169,30 @@ function MessageBubble({ role, content, images }) {
                 </Markdown>
             </div>
 
-            {lightBox && (
-                <div className='fixed inset-0 z-50 bg-black/80 backdrop-blur-sm  flex items-center justify-center p-6'>
-                    <button className='absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 rounded-full p-2'
-                        onClick={() => setLightBox(null)}>
-                        <LuX />
-                    </button>
-                    <img src={lightBox} className='max-w-[90vw] max-h-[85vh] rounded-xl border border-white/10 shadow-2xl object-contain ' />
-                </div>
-            )}
-        </div>
+            <AnimatePresence>
+                {lightBox && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className='fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6'
+                    >
+                        <button className='absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 rounded-full p-2'
+                            onClick={() => setLightBox(null)}>
+                            <LuX />
+                        </button>
+                        <motion.img
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.96 }}
+                            transition={{ duration: 0.2 }}
+                            src={lightBox}
+                            className='max-w-[90vw] max-h-[85vh] rounded-xl border border-white/10 shadow-2xl object-contain'
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     )
 }
 

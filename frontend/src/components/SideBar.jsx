@@ -7,6 +7,7 @@ import { setConversations, setSelectedConversation } from '../redux/conversation
 import { getConversations } from '../features/getConversations';
 import { logOut } from '../features/logOut';
 import { setUserData } from '../redux/userSlice';
+import { easeInOut, motion } from 'motion/react';
 
 
 
@@ -17,6 +18,8 @@ function SideBar() {
     const { conversations, selectedConversation } = useSelector(state => state.conversation);
     const { userData } = useSelector(state => state.user);
     const dispatch = useDispatch();
+    const avatar = userData?.avatar || userData?.user?.avatar;
+    const userName = userData?.name || userData?.user?.name || "user";
 
     useEffect(() => {
         const getConv = async () => {
@@ -25,6 +28,10 @@ function SideBar() {
         }
         getConv();
     }, [dispatch, userData?._id])
+
+    useEffect(() => {
+        setImageError(false);
+    }, [avatar]);
 
     const handleLogout = async () => {
         try {
@@ -38,7 +45,13 @@ function SideBar() {
     if (collapsed) {
         return (
             <>
-                <div className='glass-panel sidebar-glass hidden lg:flex flex-col items-center w-[56px] h-screen border-r border-white/70 py-4 gap-1 shrink-0'>
+                <motion.div
+                    layout
+                    initial={{ opacity: 0, x: 12, width: 56 }}
+                    animate={{ opacity: 1, x: 0, width: 56 }}
+                    transition={{ duration: 0.25, ease: easeInOut, layout: { duration: 0.25, ease: easeInOut } }}
+                    className='glass-panel sidebar-glass hidden lg:flex flex-col items-center w-[56px] h-screen border-r border-white/70 py-4 gap-1 shrink-0'
+                >
                     <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
                         onClick={() => setCollapsed(false)}
                     >
@@ -53,37 +66,46 @@ function SideBar() {
                         {conversations.map((conv, idx) => {
                             let isActive = selectedConversation?._id == conv?._id;
                             return (
-                                <div
+                                <motion.div
                                     key={conv?._id || idx}
+                                    initial={{ opacity: 0, y: 5 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.18, delay: Math.min(idx * 0.03, 0.18) }}
                                     onClick={() => dispatch(setSelectedConversation(conv))}
                                     className={`flex items-center gap-1 cursor-pointer mb-0.5 px-2 py-2 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/[0.18]" : "bg-transparent border-transparent"}`}>
 
                                     <div className={`flex items-center justify-center shrink-0 w-[28px] h-[28px] rounded-lg transition-colors duration-150 ${isActive ? "bg-indigo-500/15 text-indigo-400" : "bg-white/[0.05] text-slate-500"}`}>
                                         <LuMessageSquare />
                                     </div>
-                                </div>
+                                </motion.div>
                             )
                         })}
                     </div>
 
                     <div className='relative shrink-0'>
                         {
-                            (userData?.avatar && !imageError) ?
-                                <img className='w-8 h-8 rounded-[10px] object-cover border-2 border-indigo-500/25' src={userData?.avatar} alt={"image"} onError={() => setImageError(true)} />
+                            (avatar && !imageError) ?
+                                <img className='w-8 h-8 rounded-[10px] object-cover border-2 border-indigo-500/25' src={avatar} alt={"user avatar"} onError={() => setImageError(true)} />
                                 :
                                 <div className='w-8 h-8 rounded-full object-cover border-2 border-indigo-500/25 flex items-center justify-center'>
-                                    <FaUser size={16} className='text-slate-400 my-1' />
+                                    <FaUser size={12} className='text-slate-400 my-1' />
                                 </div>
                         }
                     </div>
 
 
-                </div>
+                </motion.div>
             </>
         )
     }
     return (
-        <aside className='glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 border-r border-white/70'>
+        <motion.aside
+            layout
+            initial={{ opacity: 0, x: -18, width: 270 }}
+            animate={{ opacity: 1, x: 0, width: 270 }}
+            transition={{ duration: 0.25, ease: easeInOut, layout: { duration: 0.25, ease: easeInOut } }}
+            className='glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 border-r border-white/70'
+        >
             <div className='flex flex-col h-full'>
                 <div className='flex items-center gap-2.5 px-4 py-4 border-b border-white/10'>
                     <button type='button' className='icon-control hidden lg:flex w-7 h-7 rounded-lg'
@@ -130,8 +152,11 @@ function SideBar() {
                     {conversations.map((conv, idx) => {
                         const isActive = selectedConversation?._id == conv?._id;
                         return (
-                            <div
+                            <motion.div
                                 key={conv?._id || idx}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.18, delay: Math.min(idx * 0.03, 0.18) }}
                                 onClick={() => dispatch(setSelectedConversation(conv))}
                                 className={`flex items-center gap-2.5 cursor-pointer mb-0.5 px-3 py-2.5 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/[0.18]" : "bg-transparent border-transparent"}`}>
 
@@ -141,7 +166,7 @@ function SideBar() {
                                 <span className={`text-[13px] font-medium truncate ${isActive ? "text-slate-100" : "text-slate-300"}`}>
                                     {conv?.title || "New Chat"}
                                 </span>
-                            </div>
+                            </motion.div>
                         )
                     })}
                 </div>
@@ -151,20 +176,25 @@ function SideBar() {
                 <div className='px-3.5 py.3.5'>
                     {userData && (
                         <>
-                            <div className='flex items-center justify-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 my-2 hover:bg-white/[0.05] transition-colors duration-150'>
+                            <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.22, delay: 0.12 }}
+                                className='flex items-center justify-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 my-2 hover:bg-white/[0.05] transition-colors duration-150'
+                            >
                                 <div className='relative shrink-0'>
                                     {
-                                        (userData?.avatar && !imageError) ?
-                                            <img className='w-9 h-9 rounded-[10px] object-cover border-2 border-indigo-500/25' src={userData?.avatar} alt={"image"} onError={() => setImageError(true)} />
+                                        (avatar && !imageError) ?
+                                            <img className='w-9 h-9 rounded-[10px] object-cover border-2 border-indigo-500/25' src={avatar} alt={"user avatar"} onError={() => setImageError(true)} />
                                             :
-                                            <div className='w-9 h-9 rounded-full object-cover border-2 border-indigo-500/25 flex items-center justify-center'>
-                                                <FaUser size={20} className='text-slate-400 my-1' />
+                                            <div className='w-10 h-10 rounded-full object-cover border-2 border-indigo-500/25 flex items-center justify-center'>
+                                                <FaUser size={16} className='text-slate-400 my-1' />
                                             </div>
                                     }
                                 </div>
 
                                 <div className='flex-1 min-w-0'>
-                                    <p className='text-[13.5px] font-semibold text-slate-100 truncate'>{userData?.user?.name || "user"}</p>
+                                    <p className='text-[13.5px] font-semibold text-slate-100 truncate'>{userName}</p>
                                     <p className='text-[11px] text-slate-600 mt-px'>{"Free Plan"}</p>
                                 </div>
                                 <div className='flex gap-1'>
@@ -177,12 +207,12 @@ function SideBar() {
                                         <LuLogOut size={16} />
                                     </button>
                                 </div>
-                            </div>
+                            </motion.div>
                         </>
                     )}
                 </div>
             </div>
-        </aside>
+        </motion.aside>
     )
 }
 

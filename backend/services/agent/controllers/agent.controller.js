@@ -20,7 +20,12 @@ export const agent = async (req, res) => {
             prompt,
             conversationId,
             agent,
-            userId
+            userId,
+            file: req.file ? {
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                buffer: req.file.buffer
+            } : undefined
         });
 
         const response = result.aiResponse;

@@ -42,6 +42,33 @@ textarea {
   background-size: 28px 28px, 28px 28px, auto;
 }
 
+.skeleton-panel,
+.skeleton-sidebar {
+  background: linear-gradient(135deg, rgba(24, 50, 73, 0.72), rgba(9, 23, 41, 0.58));
+  border-color: rgba(186, 230, 253, 0.13);
+}
+
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: rgba(186, 230, 253, 0.12);
+}
+
+.skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(224, 247, 255, 0.16), transparent);
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .app-shell::before,
 .app-shell::after {
   position: absolute;
@@ -143,8 +170,14 @@ textarea {
   transform: translateY(-1px);
 }
 
-.chat-scrollbar::-webkit-scrollbar { width: 0.45rem; }
-.chat-scrollbar::-webkit-scrollbar-thumb { background: rgba(125, 211, 252, 0.35); border-radius: 999px; }
+.chat-scrollbar::-webkit-scrollbar {
+  width: 0.45rem;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(125, 211, 252, 0.35);
+  border-radius: 999px;
+}
 
 /* A restrained type scale keeps the compact dashboard readable at every width. */
 .chat-copy {
@@ -153,21 +186,50 @@ textarea {
 }
 
 @media (max-width: 640px) {
-  .chat-copy { font-size: 0.9rem; line-height: 1.65; }
+  .chat-copy {
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
 }
 
 .sidebar-glass {
   background: linear-gradient(160deg, rgba(17, 43, 65, 0.82), rgba(5, 18, 34, 0.74));
 }
 
-.app-shell .text-slate-950, .app-shell .text-slate-800, .app-shell .text-slate-700 { color: #e5f5ff; }
-.app-shell .text-slate-600, .app-shell .text-slate-500 { color: #94b7cb; }
-.app-shell .text-slate-400 { color: #7496ac; }
-.sidebar-glass .text-slate-100 { color: #e5f5ff; }
-.sidebar-glass .text-slate-300 { color: #b5d0df; }
-.sidebar-glass .text-slate-600 { color: #83a8bd; }
-.sidebar-glass .text-slate-500 { color: #9bc2d8; }
-.sidebar-glass .bg-white\/\[0\.05\] { background-color: rgba(186, 230, 253, 0.08); }
+.app-shell .text-slate-950,
+.app-shell .text-slate-800,
+.app-shell .text-slate-700 {
+  color: #e5f5ff;
+}
+
+.app-shell .text-slate-600,
+.app-shell .text-slate-500 {
+  color: #94b7cb;
+}
+
+.app-shell .text-slate-400 {
+  color: #7496ac;
+}
+
+.sidebar-glass .text-slate-100 {
+  color: #e5f5ff;
+}
+
+.sidebar-glass .text-slate-300 {
+  color: #b5d0df;
+}
+
+.sidebar-glass .text-slate-600 {
+  color: #83a8bd;
+}
+
+.sidebar-glass .text-slate-500 {
+  color: #9bc2d8;
+}
+
+.sidebar-glass .bg-white\/\[0\.05\] {
+  background-color: rgba(186, 230, 253, 0.08);
+}
 
 .glass-button {
   color: #cceeff;

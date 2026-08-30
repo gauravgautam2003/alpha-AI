@@ -19,12 +19,6 @@ app.get("/", (req, res) => {
     })
 })
 
-/**
- * @name auth server
- * @description create server for listen services on PORT? 8001 : 5001
- * @service public
- */
-
 app.listen(PORT, function () {
     connectDB();
     console.log(`chat server is running on port: ${PORT}`);

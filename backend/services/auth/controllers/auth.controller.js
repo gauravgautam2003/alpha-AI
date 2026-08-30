@@ -19,13 +19,17 @@ export const login = async (req, res) => {
             firebaseUid: decoded.uid
         })
 
-        if(!user) {
+        if (!user) {
             user = await User.create({
                 firebaseUid: decoded.uid,
                 name: decoded.name,
                 email: decoded.email,
                 avatar: decoded.picture
             })
+        } else if (decoded.picture && user.avatar !== decoded.picture) {
+            user.avatar = decoded.picture;
+            user.name = decoded.name || user.name;
+            await user.save();
         }
 
         const sessionId = crypto.randomUUID();
@@ -36,14 +40,14 @@ export const login = async (req, res) => {
             email: user.email,
             avatar: user.avatar
 
-        }), "EX",7*24*60*60)
+        }), "EX", 7 * 24 * 60 * 60)
 
         res.cookie("session", sessionId, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
             path: "/",
-            maxAge: 7*24*60*60*1000
+            maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
 
@@ -68,14 +72,14 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-       const sessionId = req.cookies?.session; 
-       await redis.del(`session:${sessionId}`);
+        const sessionId = req.cookies?.session;
+        await redis.del(`session:${sessionId}`);
 
-       res.clearCookie("session", { path: "/" });
+        res.clearCookie("session", { path: "/" });
 
-       return res.status(200).json({
-        message: "logout succesfully"
-       })
+        return res.status(200).json({
+            message: "logout succesfully"
+        })
 
     } catch (error) {
         return res.status(500).json({

@@ -6,6 +6,7 @@ import { addMessage, setArtifacts } from '../redux/messageSlice';
 import { createConversation } from '../features/createConversation';
 import { addConversation, setConversationTitle, setSelectedConversation } from '../redux/conversationSlice';
 import { updateConversation } from '../features/updateConversation';
+import { motion } from 'motion/react';
 
 function ChatInput({ draft, onDraftChange }) {
     const { selectedConversation } = useSelector(state => state.conversation);
@@ -54,7 +55,12 @@ function ChatInput({ draft, onDraftChange }) {
                 : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
 
             dispatch(setArtifacts(data?.artifacts || []));
-            dispatch(addMessage({ role: "assistant", content: responseText, images: data?.images || [] }));
+            dispatch(addMessage({
+                role: "assistant",
+                content: responseText,
+                images: data?.images || [],
+                artifacts: data?.artifacts || []
+            }));
         } catch (error) {
             console.error("send message error", error);
             setRequestError("Message could not be sent. Please try again.");
@@ -131,7 +137,7 @@ function ChatInput({ draft, onDraftChange }) {
                     }}
                     value={draft}
                     rows={2}
-                    className='w-full bg-transparent outline-none resize-none text-[15px] text-slate-700 placeholder:text-slate-400 leading-7 [scroll-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50 ' />
+                    className='w-full mt-6 bg-transparent outline-none resize-none text-[15px] text-slate-700 placeholder:text-slate-400 leading-7 [scroll-width:none] [&::-webkit-scrollbar]:hidden disabled:opacity-50 ' />
 
                 {requestError && <p role='alert' className='text-xs text-red-400'>{requestError}</p>}
 
@@ -150,11 +156,11 @@ function ChatInput({ draft, onDraftChange }) {
                         Alpha model online
                     </div>
 
-                    <button type='button' disabled={isSending || !draft.trim()}
+                    <motion.button type='button' whileTap={{ scale: 0.92 }} whileHover={{ scale: draft.trim() ? 1.04 : 1 }} disabled={isSending || !draft.trim()}
                         onClick={handleSendMessage}
                         className={`flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl border-none transition-all duration-150 ${draft.trim() ? "blue-action" : "text-slate-400 bg-white/10 border border-sky-100 cursor-not-allowed"}`}>
                         <LuSend size={15} />
-                    </button>
+                    </motion.button>
                 </div>
             </div>
         </div>

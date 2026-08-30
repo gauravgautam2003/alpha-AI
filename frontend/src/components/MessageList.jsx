@@ -1,12 +1,25 @@
 import MessageBubble from './MessageBubble';
+import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { motion } from 'motion/react';
 
 function MessageArea({ onSuggestion }) {
     const { selectedConversation } = useSelector(state => state.conversation);
     const { messages } = useSelector(state => state.message);
+    const messageContainerRef = useRef(null);
+
+    useEffect(() => {
+        const container = messageContainerRef.current;
+        if (!container || messages.length === 0) return;
+
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: "smooth"
+        });
+    }, [messages.length]);
 
     return (
-        <div className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-2'>
+        <div ref={messageContainerRef} className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-2'>
             {messages.length == 0 || !selectedConversation ? (
                 <>
                     <div className='min-h-[300px] flex flex-col items-center justify-center gap-5 text-center'>
@@ -32,9 +45,19 @@ function MessageArea({ onSuggestion }) {
                 <>
                     <div className='max-w-4xl mx-auto space-y-5 pb-4'>
                         {messages?.map((msg, idx) => (
-                            <div key={msg?._id || idx}>
-                                <MessageBubble role={msg?.role} content={msg?.content} images={msg.images || []} />
-                            </div>
+                            <motion.div
+                                key={msg?._id || idx}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.22, delay: Math.min(idx * 0.04, 0.24) }}
+                            >
+                                <MessageBubble
+                                    role={msg?.role}
+                                    content={msg?.content}
+                                    images={msg.images || []}
+                                    artifacts={msg.artifacts || []}
+                                />
+                            </motion.div>
                         ))}
                     </div>
                 </>

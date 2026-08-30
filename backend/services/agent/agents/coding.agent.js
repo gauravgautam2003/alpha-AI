@@ -1,92 +1,85 @@
-import { getModel } from "../config/llmModels.js"
+import { getModel } from "../config/llmModels.js";
 
 export const codingAgent = async (state) => {
-    const intentLLM = await getModel("intent")
-    const llm = await getModel("coding")
+    const intentLLM = await getModel("intent");
+    const llm = await getModel("coding");
+
+    // -----------------------------
+    // 1. INTENT CLASSIFICATION
+    // -----------------------------
     const intentRes = await intentLLM.invoke(`
-        you are an intent clasifier.
+You are an intent classifier for a coding agent.
 
-        Returns ONLY one of these values.
+Return exactly one value:
+     CODE_GENERATION, 
+     CODE_REVIEW,
+     DEBUGGING, 
+     OPTIMIZATION,
+     CONVERSION, 
+     DOCUMENTATION.
 
-        CODE_GENERATION
-        CODE_REVIEW
-        DEBUGGING
-        OPTIMIZATION
-        CONVERSION
-        DOCUMENTATION
+No extra text.
 
-        User Requests:
-        ${state.prompt}
-    `)
+User request:
+${state.prompt}
+`);
 
-    const intent = intentRes.content
+    const intent = intentRes.content.trim();
 
-    if(intent == "CODE_GENERATION") {
+    // -----------------------------
+    // 2. CODE GENERATION
+    // -----------------------------
+    if (intent === "CODE_GENERATION") {
         const prompt = `
-            You are alpha ai agent.
+You are an expert software engineer and code generator.
+Build clean, secure, working code for the request.
+Use the requested stack when specified; otherwise default to HTML, CSS, and JavaScript.
 
-            Genrate the requested project.
+Rules:
+- Prefer simple, maintainable, production-ready code.
+- Do not add unnecessary libraries or files.
+- Ensure functionality works and forms/buttons/actions behave correctly.
+- Keep UI responsive and professional.
+- Use real image URLs only when needed.
+- Avoid placeholders, fake data, broken imports, and secrets.
+- Return valid JSON only in this format:
+{
+  "files": [
+    { 
+        "name": "index.html",
+        "content": "..."
+    },
+    { 
+        "name": "style.css",
+        "content": "..."
+    },
+    { 
+        "name": "script.js",
+        "content": "..."
+    },
+  ]
+}
+No markdown, no code fences, no extra text.
 
-            Default stack:
-                - HTML
-                - CSS
-                - JavaScript
+User request:
+${state.prompt}
+`;
 
-            Use React / Next.js / Vue ONLY if explicitly requested. 
-            
-            Rules:
+        const response = await llm.invoke(prompt);
 
-                - Responsive,
-                - Modern UI,
-                - CSS Variables,
-                - Flexbox/Grid,
-                - Smooth Scroll,
-                - Hover Effects,
-                - Beautiful Spacing,
-                - Single page unless user asks otherwise.
+        let data;
 
-            IMAGES:
-            
-                Always use real unsplash images.
+        try {
+            data = JSON.parse(response.content);
+        } catch (error) {
+            console.error("Invalid JSON returned by coding model:", error);
 
-                Never use Placeholders.
-                
-            Return ONLY valid JSON.
-            
-            Schema:
-
-            {
-                "files": [
-                    {
-                        "name" : "index.html",
-                        "content" : "..."
-                    },
-                    {
-                        "name" : "style.css",
-                        "content" : "..."
-                    },
-                    {
-                        "name" : "script.js",
-                        "content" : "..."
-                    },
-                ]
-            }
-
-            Rules:
-
-                - Output must start with {
-                - Output must end with }
-                - No markdown
-                - No extra text
-                - No \'\'\'
-                - Never mention intent
-
-            User Request:
-                ${state.prompt}    
-        `
-
-        const response = await llm.invoke(prompt)
-        const data = JSON.parse(response.content)
+            return {
+                ...state,
+                aiResponse: "Failed to generate valid project code.",
+                artifacts: []
+            };
+        }
 
         return {
             ...state,
@@ -99,34 +92,27 @@ export const codingAgent = async (state) => {
                     title: state.prompt
                 }
             ]
-        }
+        };
     }
 
+    // -----------------------------
+    // 3. OTHER CODING INTENTS
+    // -----------------------------
     const response = await llm.invoke(`
-        The user's request is:
+You are an expert software engineer.
+The request is classified as: ${intent}.
 
-        ${intent}
+Solve it clearly and correctly. Use the root cause, fix the issue, and keep the solution practical and maintainable. Do not invent APIs or credentials. Return concise markdown with overview, solution, code, and conclusion when useful.
 
-        Return Markdown only.
+User request:
+${state.prompt}
+`);
 
-        Use headings like.
+    const data = response.content;
 
-        # Overview
-        ## Explanation
-        ## Problems
-        ## Improvements
-        ## Best Practices
-        ## Optimized Code (if needed)
-
-        User Request:
-
-        ${state.prompt}
-    `)
-
-    const data = response.content
     return {
         ...state,
         aiResponse: data,
         artifacts: []
-    }
-}
+    };
+};

@@ -9,6 +9,7 @@ import { setUserData } from '../redux/userSlice';
 import SideBar from '../components/SideBar';
 import ChatArea from '../components/ChatArea';
 import Artifact from '../components/Artifact';
+import AppSkeleton from '../skeletons/AppSkeleton';
 
 
 const Home = () => {
@@ -51,6 +52,10 @@ const Home = () => {
         }
     }
 
+    if (loading) {
+        return <AppSkeleton />;
+    }
+
     return (
         <div className='app-shell h-screen flex text-slate-700 overflow-hidden'>
 
@@ -58,7 +63,7 @@ const Home = () => {
             <ChatArea />
             <Artifact />
 
-            {!loading && !userData &&
+            {!userData &&
                 <div className='fixed flex items-center justify-center bg-sky-950/20 inset-0 z-50 backdrop-blur-md p-4'>
                     <div className='glass-panel w-full max-w-[350px] rounded-2xl p-7 flex flex-col gap-5 '>
                         <div className='flex flex-col gap-1'>
