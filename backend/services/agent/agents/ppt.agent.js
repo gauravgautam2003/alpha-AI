@@ -1,6 +1,7 @@
 import { getModel } from "../config/llmModels.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 import { generatePPT } from "../utils/generatePPT.js";
+import { deductCredits } from "../utils/deductCredits.js";
 
 export const pptAgent = async (state) => {
     try {
@@ -65,6 +66,8 @@ export const pptAgent = async (state) => {
         const cleanJsonText = jsonStart >= 0 && jsonEnd > jsonStart ? jsonText.slice(jsonStart, jsonEnd + 1) : jsonText;
 
         const data = JSON.parse(cleanJsonText);
+        await deductCredits(state.userId, "ppt")
+
         if (!data?.title || !Array.isArray(data?.slides)) {
             throw new Error("Invalid PPT payload structure");
         }

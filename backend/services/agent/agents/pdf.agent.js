@@ -1,6 +1,7 @@
 import generatePdf from "../utils/generatePDF.js";
 import { getModel } from "../config/llmModels.js";
-import cloudinary, { uploadBuffer } from "../config/cloudinary.js";
+import { uploadBuffer } from "../config/cloudinary.js";
+import { deductCredits } from "../utils/deductCredits.js";
 
 export const pdfAgent = async (state) => {
     try {
@@ -44,6 +45,8 @@ ${state.prompt}
 
             
         const data = JSON.parse(jsonText)
+        await deductCredits(state.userId, "pdf")
+
         const pdfBuffer = await generatePdf(data)
         const fileName = `pdf-${Date.now()}.pdf`
         const uploaded = await uploadBuffer(pdfBuffer, {

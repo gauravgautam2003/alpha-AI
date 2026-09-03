@@ -1,5 +1,6 @@
 import axios from "axios";
 import cloudinary, { uploadBuffer } from "../config/cloudinary.js";
+import { deductCredits } from "../utils/deductCredits.js";
 
 export const imageGenAgent = async (state) => {
 
@@ -13,7 +14,8 @@ export const imageGenAgent = async (state) => {
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`
 
         const imageResponse = await axios.get(imageUrl, { responseType: "arraybuffer" })
-
+        await deductCredits(state.userId, "image")
+        
         const buffer = Buffer.from(imageResponse.data)
 
         const filename = `image-${Date.now()}`;

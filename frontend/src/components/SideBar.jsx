@@ -8,12 +8,14 @@ import { getConversations } from '../features/getConversations';
 import { logOut } from '../features/logOut';
 import { setUserData } from '../redux/userSlice';
 import { easeInOut, motion } from 'motion/react';
+import BillingDrawer from './BillingDrawer';
 
 
 
 function SideBar() {
     const [collapsed, setCollapsed] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [showBilling, setShowBilling] = useState(false);
 
     const { conversations, selectedConversation } = useSelector(state => state.conversation);
     const { userData } = useSelector(state => state.user);
@@ -198,7 +200,9 @@ function SideBar() {
                                     <p className='text-[11px] text-slate-600 mt-px'>{"Free Plan"}</p>
                                 </div>
                                 <div className='flex gap-1'>
-                                    <button className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-yellow-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'>
+                                    <button
+                                        onClick={() => setShowBilling(true)}
+                                        className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-yellow-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'>
                                         <LuCoins size={16} />
                                     </button>
                                     <button className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'
@@ -212,6 +216,11 @@ function SideBar() {
                     )}
                 </div>
             </div>
+
+            <BillingDrawer
+                open={showBilling}
+                onClose={() => setShowBilling(false)}
+            />
         </motion.aside>
     )
 }

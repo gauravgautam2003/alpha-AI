@@ -8,7 +8,7 @@ export const PLANS = {
     starter : {
         id: "starter",
         name: "Starter",
-        amount: 199,
+        amount: 299,
         credits: 500,
         validity: 30
     },

@@ -1,13 +1,15 @@
 import { getModel } from "../config/llmModels.js";
+import { deductCredits } from "../utils/deductCredits.js";
 
 export const codingAgent = async (state) => {
-    const intentLLM = await getModel("intent");
-    const llm = await getModel("coding");
+    try {
+        const intentLLM = await getModel("intent");
+        const llm = await getModel("coding");
 
-    // -----------------------------
-    // 1. INTENT CLASSIFICATION
-    // -----------------------------
-    const intentRes = await intentLLM.invoke(`
+        // -----------------------------
+        // 1. INTENT CLASSIFICATION
+        // -----------------------------
+        const intentRes = await intentLLM.invoke(`
 You are an intent classifier for a coding agent.
 
 Return exactly one value:
@@ -24,13 +26,13 @@ User request:
 ${state.prompt}
 `);
 
-    const intent = intentRes.content.trim();
+        const intent = intentRes.content.trim();
 
-    // -----------------------------
-    // 2. CODE GENERATION
-    // -----------------------------
-    if (intent === "CODE_GENERATION") {
-        const prompt = `
+        // -----------------------------
+        // 2. CODE GENERATION
+        // -----------------------------
+        if (intent === "CODE_GENERATION") {
+            const prompt = `
 You are an expert software engineer and code generator.
 Build clean, secure, working code for the request.
 Use the requested stack when specified; otherwise default to HTML, CSS, and JavaScript.
@@ -45,60 +47,62 @@ Rules:
 - Return valid JSON only in this format:
 {
   "files": [
-    { 
-        "name": "index.html",
-        "content": "..."
-    },
-    { 
-        "name": "style.css",
-        "content": "..."
-    },
-    { 
-        "name": "script.js",
-        "content": "..."
-    },
-  ]
+        { 
+            "name": "index.html",
+            "content": "..."
+        },
+        { 
+            "name": "style.css",
+            "content": "..."
+        },
+        { 
+            "name": "script.js",
+            "content": "..."
+        },
+    ]
 }
-No markdown, no code fences, no extra text.
-
-User request:
+        No markdown, no code fences, no extra text.
+        
+        User request:
 ${state.prompt}
 `;
 
-        const response = await llm.invoke(prompt);
+            const response = await llm.invoke(prompt);
 
-        let data;
+            let data;
 
-        try {
-            data = JSON.parse(response.content);
-        } catch (error) {
-            console.error("Invalid JSON returned by coding model:", error);
+            try {
+                data = JSON.parse(response.content);
+                await deductCredits(state.userId, "coding")
+                
+            } catch (error) {
+                console.error("Invalid JSON returned by coding model:", error);
+
+                return {
+                    ...state,
+                    aiResponse: "Failed to generate valid project code.",
+                    artifacts: []
+                };
+            }
 
             return {
                 ...state,
-                aiResponse: "Failed to generate valid project code.",
-                artifacts: []
+                aiResponse: "Code Generated Successfully.",
+                artifacts: [
+                    {
+                        id: Date.now(),
+                        type: "Project",
+                        files: data.files || [],
+                        title: state.prompt
+                    }
+                ]
             };
         }
 
-        return {
-            ...state,
-            aiResponse: "Code Generated Successfully.",
-            artifacts: [
-                {
-                    id: Date.now(),
-                    type: "Project",
-                    files: data.files || [],
-                    title: state.prompt
-                }
-            ]
-        };
-    }
-
-    // -----------------------------
-    // 3. OTHER CODING INTENTS
-    // -----------------------------
-    const response = await llm.invoke(`
+        // -----------------------------
+        // 3. OTHER CODING INTENTS
+        // -----------------------------
+        const response = await llm.invoke(`
 You are an expert software engineer.
 The request is classified as: ${intent}.
 
@@ -108,11 +112,17 @@ User request:
 ${state.prompt}
 `);
 
-    const data = response.content;
-
-    return {
-        ...state,
-        aiResponse: data,
-        artifacts: []
-    };
+        const data = response.content;
+        await deductCredits(state.userId, "coding")
+            
+        return {
+            ...state,
+            aiResponse: data,
+            artifacts: []
+        };
+    } catch (error) {
+        return res.status(500).json({
+            message: "coding agent error"
+        })
+    }
 };
