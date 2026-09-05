@@ -11,6 +11,22 @@ export const router = async (state) => {
         };
     }
 
+    if(state.file.mimeType == "application/pdf") {
+        return {
+            ...state,
+            agent: "pdfRag"
+        }
+    }
+
+    
+    if(state.file.mimeType.startsWith == "image/") {
+        return {
+            ...state,
+            agent: "imageAnalyzer"
+        }
+    }
+
+
     const prompt = `
 You are Alpha AI's professional Agent Router.
 

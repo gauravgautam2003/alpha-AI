@@ -29,6 +29,8 @@ const openRouter = new ChatOpenRouter({
     temperature: 0,
     maxTokens: 2500,
 });
+
+
 export const getModel = async (agent) => {
     switch (agent) {
         case "chat":
@@ -39,6 +41,8 @@ export const getModel = async (agent) => {
             return groq
         case "coding":
             return openRouter
+        case "imageAnalyzer":
+            return gemini    
         default:
             return groq
     }
