@@ -1,6 +1,7 @@
 import fs from "fs"
 import { getModel } from "../config/llmModels.js"
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
+import { deductCredits } from "../utils/deductCredits.js"
 
 export const imageAnalyzerAgent = async (state) => {
     try {
@@ -39,6 +40,7 @@ export const imageAnalyzerAgent = async (state) => {
         ]
 
         const response = await llm.invoke(messages)
+        await deductCredits(state.userId, "image")
         return {
             ...state,
             aiResponse: response.content
