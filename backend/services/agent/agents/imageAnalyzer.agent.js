@@ -1,4 +1,4 @@
-import fs from "fs"
+import fs from "fs/promises"
 import { getModel } from "../config/llmModels.js"
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 import { deductCredits } from "../utils/deductCredits.js"
@@ -53,6 +53,6 @@ export const imageAnalyzerAgent = async (state) => {
             aiResponse: "Failed to analyze file"
         }
     } finally {
-        fs.unlink(state.file.path)
+        await fs.unlink(state.file.path)
     }
 }

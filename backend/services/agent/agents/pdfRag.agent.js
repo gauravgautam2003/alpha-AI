@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import { PDFParse } from "pdf-parse";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { vectorStore } from "../config/vectorDB.js";
@@ -8,7 +8,7 @@ import { deductCredits } from "../utils/deductCredits.js";
 
 export const pdfRagAgent = async (state) => {
     try {
-        const pdfBuffer = fs.readFileSync(state.file.path)
+        const pdfBuffer = await fs.readFileSync(state.file.path)
         const pdf = new PDFParse({ data: pdfBuffer })
 
         const result = pdf.getText()
@@ -58,6 +58,6 @@ export const pdfRagAgent = async (state) => {
         }
     }
     finally {
-        fs.unlink(state.file.path)
+        await fs.unlink(state.file.path)
     }
 }

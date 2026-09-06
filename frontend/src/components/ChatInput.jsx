@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
@@ -13,6 +13,8 @@ function ChatInput({ draft, onDraftChange }) {
     const [selectedAgent, setSelectedAgent] = useState("Auto");
     const [isSending, setIsSending] = useState(false);
     const [requestError, setRequestError] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileRef = useRef(null)
     const dispatch = useDispatch();
 
 
@@ -45,11 +47,15 @@ function ChatInput({ draft, onDraftChange }) {
             dispatch(addMessage({ role: "user", content: value }));
             onDraftChange("");
 
-            const data = await sendMessage({
-                prompt: value,
-                conversationId: conversation._id,
-                agent: selectedAgent.toLowerCase()
-            });
+            
+            const formData = new FormData()
+            formData.append("prompt", value.trim())
+            formData.append("conversationId", conversation._id)
+            formData.append("agent", selectedAgent.toLowerCase())
+            formData.append("file", selectedFile)
+            
+            const data = await sendMessage(formData);
+            
             const responseText = typeof data === 'string'
                 ? data
                 : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
@@ -143,7 +149,15 @@ function ChatInput({ draft, onDraftChange }) {
 
                 <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-1'>
-                        <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
+
+                        <input type="file" accept='pdf, image/*' hidden ref={fileRef} onChange={(e) => {
+                            const file = e.target.file[0]
+                            if(file) {
+                                setSelectedFile(file)
+                            }
+                        }}/>
+
+                        <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500' onClick={() => fileRef.current.click()}>
                             <LuPaperclip size={16} />
                         </button>
                         <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
