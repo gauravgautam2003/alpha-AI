@@ -12,7 +12,14 @@ const port = process.env.PORT || 5003
 
 app.use(express.json());
 app.use("/", agentRouter);
+app.use((err, req, res, next) => {
+    console.error(err)
+    if(err.status) {
+        return res.status(err.status).json(err.data)
+    }
 
+    return res.status(500).json({message: `Agent errro ${err}`})
+})
 app.get("/", (req, res) => {
     return res.json({message: "welcome to agent"});
 })

@@ -1,10 +1,12 @@
 import axios from "axios";
 import cloudinary, { uploadBuffer } from "../config/cloudinary.js";
 import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const imageGenAgent = async (state) => {
 
     try {
+        await checkAgentLimit(state.userId, "image")
         const prompt = String(state.prompt || "").trim();
 
         if (!prompt) {
@@ -40,7 +42,7 @@ export const imageGenAgent = async (state) => {
 
         return {
             ...state,
-            aiResponse: "❌ Failed to Generate Image",
+            aiResponse: error?.data?.message ||  "❌ Failed to Generate Image",
             images: [],
         };
     }

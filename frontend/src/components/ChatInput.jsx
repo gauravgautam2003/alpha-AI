@@ -12,6 +12,7 @@ function ChatInput({ draft, onDraftChange }) {
     dispatch(setIsLoading(true))
     const { selectedConversation } = useSelector(state => state.conversation);
     const [selectedAgent, setSelectedAgent] = useState("Auto");
+    const { isLoading } = useSelector(state => state.message)
     const [isSending, setIsSending] = useState(false);
     const [requestError, setRequestError] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
@@ -197,7 +198,7 @@ function ChatInput({ draft, onDraftChange }) {
                         Alpha model online
                     </div>
 
-                    <motion.button type='button' whileTap={{ scale: 0.92 }} whileHover={{ scale: draft.trim() ? 1.04 : 1 }} disabled={isSending || !draft.trim()}
+                    <motion.button type='button' whileTap={{ scale: 0.92 }} whileHover={{ scale: draft.trim() ? 1.04 : 1 }} disabled={isSending || !draft.trim() || isLoading}
                         onClick={handleSendMessage}
                         className={`flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl border-none transition-all duration-150 ${draft.trim() ? "blue-action" : "text-slate-400 bg-white/10 border border-sky-100 cursor-not-allowed"}`}>
                         <LuSend size={15} />

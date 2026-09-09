@@ -1,9 +1,13 @@
+import { checkAgentLimit } from "../config/agentLimit.js";
 import { getModel } from "../config/llmModels.js";
 import { deductCredits } from "../utils/deductCredits.js";
 
 export const codingAgent = async (state) => {
     try {
+
         const intentLLM = await getModel("intent");
+        await checkAgentLimit(state.userId, "coding")
+
         const llm = await getModel("coding");
 
         // -----------------------------
@@ -74,7 +78,7 @@ ${state.prompt}
             try {
                 data = JSON.parse(response.content);
                 await deductCredits(state.userId, "coding")
-                
+
             } catch (error) {
                 console.error("Invalid JSON returned by coding model:", error);
 
@@ -114,15 +118,17 @@ ${state.prompt}
 
         const data = response.content;
         await deductCredits(state.userId, "coding")
-            
+
         return {
             ...state,
             aiResponse: data,
             artifacts: []
         };
     } catch (error) {
-        return res.status(500).json({
-            message: "coding agent error"
-        })
+        return {
+            ...state,
+            aiResponse:  error?.data?.message || "coding agent error",
+            artifacts: []
+        };
     }
 };

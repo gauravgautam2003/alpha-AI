@@ -1,8 +1,10 @@
+import { checkAgentLimit } from "../config/agentLimit.js";
 import { searchTool } from "../config/tavilySearch.js"
 import { deductCredits } from "../utils/deductCredits.js";
 
 export const searchAgent = async (state) => {
     try {
+        await checkAgentLimit(state.userId, "search")
         const results = await searchTool.invoke({
             query: state.prompt
         })
@@ -16,7 +18,7 @@ export const searchAgent = async (state) => {
     } catch (error) {
         return {
             ...state,
-            searchResults: [],
+            searchResults: error?.data?.message || [],
             images: []
         }
     }   

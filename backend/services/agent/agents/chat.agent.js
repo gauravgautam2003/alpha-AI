@@ -7,9 +7,12 @@ import {
 import { getModel } from "../config/llmModels.js";
 import { getMemory } from "../config/memory.js";
 import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const chatAgent = async (state) => {
     try {
+
+        await checkAgentLimit(state.userId, "chat")
         const llm = await getModel("chat");
 
         const history = await getMemory(
@@ -84,8 +87,9 @@ ${searchContext}
             aiResponse: response.content
         };
     } catch (error) {
-        return res.status(500).json({
-            message: "chat agent error"
-        })
+        return {
+            ...state,
+            aiResponse: error?.data?.message || "chat agent error"
+        };
     }
 };

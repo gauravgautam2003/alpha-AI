@@ -2,9 +2,11 @@ import { getModel } from "../config/llmModels.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 import { generatePPT } from "../utils/generatePPT.js";
 import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const pptAgent = async (state) => {
     try {
+        await checkAgentLimit(state.userId, "ppt")
         const llm = await getModel("ppt");
         const response = await llm.invoke(`
         You are a professional presentation designer.
@@ -102,7 +104,7 @@ export const pptAgent = async (state) => {
 
         return {
             ...state,
-            aiResponse: "❌ Failed to Generate PPT",
+            aiResponse: error?.data?.message || "❌ Failed to Generate PPT",
         };
     }
 };

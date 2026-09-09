@@ -2,9 +2,11 @@ import generatePdf from "../utils/generatePDF.js";
 import { getModel } from "../config/llmModels.js";
 import { uploadBuffer } from "../config/cloudinary.js";
 import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const pdfAgent = async (state) => {
     try {
+        await checkAgentLimit(state.userId, "pdf")
         const llm = await getModel("pdf");
         const response = await llm.invoke(`
 You are a PDF document designer.
@@ -71,7 +73,7 @@ ${state.prompt}
 
         return {
             ...state,
-            aiResponse: "❌ Failed to Generate PDF",
+            aiResponse: error?.data?.message ||  "❌ Failed to Generate PDF",
         };
     }
 };
