@@ -2,13 +2,14 @@ import { useRef, useState } from 'react'
 import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
-import { addMessage, setArtifacts } from '../redux/messageSlice';
+import { addMessage, setArtifacts, setIsLoading } from '../redux/messageSlice';
 import { createConversation } from '../features/createConversation';
 import { addConversation, setConversationTitle, setSelectedConversation } from '../redux/conversationSlice';
 import { updateConversation } from '../features/updateConversation';
 import { motion } from 'motion/react';
 
 function ChatInput({ draft, onDraftChange }) {
+    dispatch(setIsLoading(true))
     const { selectedConversation } = useSelector(state => state.conversation);
     const [selectedAgent, setSelectedAgent] = useState("Auto");
     const [isSending, setIsSending] = useState(false);
@@ -52,9 +53,13 @@ function ChatInput({ draft, onDraftChange }) {
             formData.append("prompt", value.trim())
             formData.append("conversationId", conversation._id)
             formData.append("agent", selectedAgent.toLowerCase())
-            formData.append("file", selectedFile)
+            if (selectedFile) {
+                formData.append("file", selectedFile)
+            }
 
             const data = await sendMessage(formData);
+            dispatch(setIsLoading(false))
+
 
             const responseText = typeof data === 'string'
                 ? data

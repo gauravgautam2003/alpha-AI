@@ -2,10 +2,12 @@ import MessageBubble from './MessageBubble';
 import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { motion } from 'motion/react';
+import LoadingAnimation from './LoadingAnimation';
+
 
 function MessageArea({ onSuggestion }) {
     const { selectedConversation } = useSelector(state => state.conversation);
-    const { messages } = useSelector(state => state.message);
+    const { messages, isLoading } = useSelector(state => state.message);
     const messageContainerRef = useRef(null);
 
     useEffect(() => {
@@ -16,7 +18,7 @@ function MessageArea({ onSuggestion }) {
             top: container.scrollHeight,
             behavior: "smooth"
         });
-    }, [messages.length]);
+    }, [messages.length, isLoading]);
 
     return (
         <div ref={messageContainerRef} className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-2'>
@@ -59,6 +61,8 @@ function MessageArea({ onSuggestion }) {
                                 />
                             </motion.div>
                         ))}
+
+                        {isLoading && <LoadingAnimation />}
                     </div>
                 </>
             )}

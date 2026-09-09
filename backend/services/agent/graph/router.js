@@ -11,18 +11,20 @@ export const router = async (state) => {
         };
     }
 
-    if(state.file.mimetype == "application/pdf") {
-        return {
-            ...state,
-            agent: "pdfRag"
+    if (state.file) {
+        if (state.file.mimetype == "application/pdf") {
+            return {
+                ...state,
+                agent: "pdfRag"
+            }
         }
-    }
 
-    
-    if(state.file.mimetype.startsWith("image/")) {
-        return {
-            ...state,
-            agent: "imageAnalyzer"
+
+        if (state.file.mimetype.startsWith("image/")) {
+            return {
+                ...state,
+                agent: "imageAnalyzer"
+            }
         }
     }
 
