@@ -42,7 +42,7 @@ export const createOrder = async (req, res) => {
             status: "created"
         })
 
-        return req.status(200).json({
+        return res.status(200).json({
             message: "Create order successfully created",
             success: true,
             order,
@@ -61,9 +61,9 @@ export const verifyPayment = async (req, res) => {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body
 
         const generateSignature = crypto
-                                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-                                .update(`${razorpay_order_id} | ${razorpay_payment_id}`)
-                                .digest("hex")
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id} | ${razorpay_payment_id}`)
+            .digest("hex")
 
         if (generateSignature !== razorpay_signature) {
             return res.status(400).json({

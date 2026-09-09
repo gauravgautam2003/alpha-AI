@@ -1,4 +1,3 @@
-import fs from "fs/promises"
 import { getModel } from "../config/llmModels.js"
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 import { deductCredits } from "../utils/deductCredits.js"
@@ -7,9 +6,9 @@ import { checkAgentLimit } from "../config/agentLimit.js"
 export const imageAnalyzerAgent = async (state) => {
     try {
         await checkAgentLimit(state.userId, "image")
-        
+
         const llm = await getModel("imageAnalyzer")
-        const imageBuffer = await fs.readFile(state.file.path)
+        const imageBuffer = state.file.buffer
         const base64Image = imageBuffer.toString("base64")
 
         const messages = [
@@ -35,7 +34,7 @@ export const imageAnalyzerAgent = async (state) => {
                     {
                         type: "image_url",
                         "image_url": {
-                            url: `data:${state.file.mimeType};base64,${base64Image}`
+                            url: `data:${state.file.mimetype};base64,${base64Image}`
                         }
                     }
                 ]
@@ -53,9 +52,7 @@ export const imageAnalyzerAgent = async (state) => {
         console.log(error.message || error)
         return {
             ...state,
-            aiResponse: error?.data?.message ||  "Failed to analyze file"
+            aiResponse: error?.data?.message || "Failed to analyze file"
         }
-    } finally {
-        await fs.unlink(state.file.path)
     }
 }

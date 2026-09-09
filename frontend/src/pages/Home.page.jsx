@@ -71,8 +71,8 @@ const Home = () => {
 
     const googleLogin = async () => {
         try {
-            const { data } = await signInWithPopup(auth, googleProvider);
-            let token = await data.user.getIdToken();
+            const { user } = await signInWithPopup(auth, googleProvider);
+            const token = await user.getIdToken();
             await handleLogin(token);
         } catch (error) {
             console.log("google login error", error);
@@ -146,7 +146,7 @@ const Home = () => {
                                     </div>
                                     <p className='premium-label mb-4 inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]'>Your intelligent workspace</p>
                                     <h2 className='max-w-[260px] text-3xl font-semibold leading-tight tracking-tight text-white'>Make ideas move at the speed of thought.</h2>
-                                    <p className='mt-5 max-w-[270px] text-sm leading-6 text-sky-100/65'>One calm space for conversations, research, code, documents and everything in between.</p>
+                                    <p className='mt-5 max-w-90 text-sm leading-6 text-sky-100/65'>One calm space for conversations, research, code, documents and everything in between.</p>
                                 </motion.div>
                                 <motion.div className='relative z-10 flex items-center gap-2 text-xs text-sky-100/60' initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45, duration: 0.4 }}>
                                     <LuLockKeyhole size={14} className='text-cyan-300' />
@@ -183,7 +183,7 @@ const Home = () => {
                                 </motion.div>}
 
                                 {!verificationSent && <>
-                                    <div className='mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/[0.04] p-1'>
+                                    <div className='mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/4 p-1'>
                                         {[["login", "Sign in"], ["signup", "Create account"]].map(([mode, label]) => (
                                             <button key={mode} type='button' onClick={() => { setAuthMode(mode); setLoginError(""); }} className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition-all ${authMode === mode ? "bg-white/10 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"}`}>
                                                 {label}
@@ -208,14 +208,14 @@ const Home = () => {
                                                 <label htmlFor='name' className='mb-1.5 block text-xs font-semibold text-slate-300'>Full name</label>
                                                 <div className='relative'>
                                                     <LuUserRound size={16} className='absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500' />
-                                                    <input id='name' name='name' placeholder='Your full name' className='w-full rounded-xl border border-white/10 bg-white/[0.06] py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-4 focus:ring-cyan-300/10' type='text' autoComplete='name' required />
+                                                    <input id='name' name='name' placeholder='Your full name' className='w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/8 focus:ring-4 focus:ring-cyan-300/10' type='text' autoComplete='name' required />
                                                 </div>
                                             </div>}
                                             <div>
                                                 <label htmlFor='email' className='mb-1.5 block text-xs font-semibold text-slate-300'>Email address</label>
                                                 <div className='relative'>
                                                     <LuMail size={16} className='absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500' />
-                                                    <input id='email' name='email' placeholder='you@example.com' className='w-full rounded-xl border border-white/10 bg-white/[0.06] py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-4 focus:ring-cyan-300/10' type='email' autoComplete='email' required />
+                                                    <input id='email' name='email' placeholder='you@example.com' className='w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/8 focus:ring-4 focus:ring-cyan-300/10' type='email' autoComplete='email' required />
                                                 </div>
                                             </div>
                                             {loginError && <p role='alert' className='rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{loginError}</p>}

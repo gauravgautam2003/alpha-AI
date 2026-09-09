@@ -19,6 +19,6 @@ router.post("/create", createOrder)
  */
 
 
-router.post("/create", verifyPayment)
+router.post("/verify", verifyPayment)
 
 export default router

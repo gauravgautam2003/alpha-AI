@@ -18,7 +18,6 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const fileRef = useRef(null)
     const dispatch = useDispatch();
-    dispatch(setIsLoading(true))
 
 
     const handleSendMessage = async () => {
@@ -31,6 +30,7 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
         }
 
         setIsSending(true);
+        dispatch(setIsLoading(true));
         setRequestError("");
 
         try {
@@ -65,7 +65,6 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
             }
 
             const data = await sendMessage(formData);
-            dispatch(setIsLoading(false))
 
 
             const responseText = typeof data === 'string'
@@ -84,6 +83,7 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
             console.error("send message error", error);
             setRequestError("Message could not be sent. Please try again.");
         } finally {
+            dispatch(setIsLoading(false));
             setIsSending(false);
         }
     }
@@ -184,7 +184,7 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
                     <div className='flex items-center gap-1'>
 
                         <input type="file" accept='pdf, image/*' hidden ref={fileRef} onChange={(e) => {
-                            const file = e.target.file[0]
+                            const file = e.target.files[0]
                             if (file) {
                                 setSelectedFile(file)
                             }

@@ -32,10 +32,6 @@ function SideBar({ onRequireAuth }) {
         getConv();
     }, [dispatch, userData?._id])
 
-    useEffect(() => {
-        setImageError(false);
-    }, [avatar]);
-
     const handleLogout = async () => {
         try {
             await logOut();
@@ -55,17 +51,17 @@ function SideBar({ onRequireAuth }) {
                     transition={{ duration: 0.25, ease: easeInOut, layout: { duration: 0.25, ease: easeInOut } }}
                     className='glass-panel sidebar-glass hidden lg:flex flex-col items-center w-[56px] h-screen border-r border-white/70 py-4 gap-1 shrink-0'
                 >
-                    <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
+                    <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
                         onClick={() => setCollapsed(false)}
                     >
                         <LuPanelRight />
                     </button>
-                    <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
+                    <button className='flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent border-none cursor-pointer mb-1 '
                         onClick={() => dispatch(setSelectedConversation(null))}>
                         <LuPlus size={18} />
                     </button>
 
-                    <div className='flex-1 overflow-y-auto px-2.5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-5'>
+                    <div className='flex-1 overflow-y-auto px-2.5 pb-2 scrollbar-none pt-5'>
                         {conversations.map((conv, idx) => {
                             let isActive = selectedConversation?._id == conv?._id;
                             return (
@@ -75,9 +71,9 @@ function SideBar({ onRequireAuth }) {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.18, delay: Math.min(idx * 0.03, 0.18) }}
                                     onClick={() => dispatch(setSelectedConversation(conv))}
-                                    className={`flex items-center gap-1 cursor-pointer mb-0.5 px-2 py-2 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/[0.18]" : "bg-transparent border-transparent"}`}>
+                                    className={`flex items-center gap-1 cursor-pointer mb-0.5 px-2 py-2 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/18" : "bg-transparent border-transparent"}`}>
 
-                                    <div className={`flex items-center justify-center shrink-0 w-[28px] h-[28px] rounded-lg transition-colors duration-150 ${isActive ? "bg-indigo-500/15 text-indigo-400" : "bg-white/[0.05] text-slate-500"}`}>
+                                    <div className={`flex items-center justify-center shrink-0 w-[28px] h-[28px] rounded-lg transition-colors duration-150 ${isActive ? "bg-indigo-500/15 text-indigo-400" : "bg-white/5 text-slate-500"}`}>
                                         <LuMessageSquare />
                                     </div>
                                 </motion.div>
@@ -103,7 +99,7 @@ function SideBar({ onRequireAuth }) {
     }
     return (
         <>
-            <button className='lg:hidden fixed top-3.5 left-4 z-50 flex items-center justify-center w-8 h-8 rounded-lg bg-[#0d0f14] border border-white/[[0.06] text-slate-400 hover:text-slate-200 transition-colors duration-150 cursor-pointer'
+            <button className='lg:hidden fixed top-3.5 left-4 z-50 flex items-center justify-center w-8 h-8 rounded-lg bg-[#0d0f14] border border-white/6 text-slate-400 hover:text-slate-200 transition-colors duration-150 cursor-pointer'
                 onClick={() => setMobileOpen(true)}>
                 <LuMenu size={14} />
             </button>
@@ -117,7 +113,7 @@ function SideBar({ onRequireAuth }) {
                 initial={{ opacity: 0, x: -18, width: 270 }}
                 animate={{ opacity: 1, x: 0, width: 270 }}
                 transition={{ duration: 0.25, ease: "easeInOut", layout: { duration: 0.25, ease: "easeInOut" } }}
-                className={`glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-[270px] h-screen shrink-0 border-r border-white/70 transition-transform duration-250 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+                className={`glass-panel sidebar-glass fixed lg:static inset-y-0 left-0 z-50 w-90 h-screen shrink-0 border-r border-white/70 transition-transform duration-250 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
             >
 
                 <div className='flex flex-col h-full'>
@@ -128,7 +124,7 @@ function SideBar({ onRequireAuth }) {
                             <LuPanelLeft />
                         </button>
 
-                        <button className='lg:hidden flex items-center justify-center w-7 h-7  rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer' onClick={() => setMobileOpen(false)}>
+                        <button className='lg:hidden flex items-center justify-center w-7 h-7  rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent border-none cursor-pointer' onClick={() => setMobileOpen(false)}>
                             <LuX />
                         </button>
 
@@ -167,7 +163,7 @@ function SideBar({ onRequireAuth }) {
                         </>
                     )}
 
-                    <div className='flex-1 overflow-y-auto px-2.5 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden '>
+                    <div className='flex-1 overflow-y-auto px-2.5 pb-2 scrollbar-none '>
                         {conversations.map((conv, idx) => {
                             const isActive = selectedConversation?._id == conv?._id;
                             return (
@@ -177,9 +173,9 @@ function SideBar({ onRequireAuth }) {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.18, delay: Math.min(idx * 0.03, 0.18) }}
                                     onClick={() => dispatch(setSelectedConversation(conv))}
-                                    className={`flex items-center gap-2.5 cursor-pointer mb-0.5 px-3 py-2.5 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/[0.18]" : "bg-transparent border-transparent"}`}>
+                                    className={`flex items-center gap-2.5 cursor-pointer mb-0.5 px-3 py-2.5 rounded-[10px] border transition-colors duration-150 ${isActive ? "bg-indigo-500/10 border-indigo-500/18" : "bg-transparent border-transparent"}`}>
 
-                                    <div className={`flex items-center justify-center shrink-0 w-[28px] h-[28px] rounded-lg transition-colors duration-150 ${isActive ? "bg-indigo-500/15 text-indigo-400" : "bg-white/[0.05] text-slate-500"}`}>
+                                    <div className={`flex items-center justify-center shrink-0 w-[28px] h-[28px] rounded-lg transition-colors duration-150 ${isActive ? "bg-indigo-500/15 text-indigo-400" : "bg-white/5 text-slate-500"}`}>
                                         <LuMessageSquare />
                                     </div>
                                     <span className={`text-[13px] font-medium truncate ${isActive ? "text-slate-100" : "text-slate-300"}`}>
@@ -190,7 +186,7 @@ function SideBar({ onRequireAuth }) {
                         })}
                     </div>
 
-                    <div className='mx-2.5 h-px bg-white/[0.06]' />
+                    <div className='mx-2.5 h-px bg-white/6' />
 
                     <div className='px-3.5 py.3.5'>
                         {userData && (
@@ -199,7 +195,7 @@ function SideBar({ onRequireAuth }) {
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.22, delay: 0.12 }}
-                                    className='flex items-center justify-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 my-2 hover:bg-white/[0.05] transition-colors duration-150'
+                                    className='flex items-center justify-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 my-2 hover:bg-white/5 transition-colors duration-150'
                                 >
                                     <div className='relative shrink-0'>
                                         {
@@ -219,10 +215,10 @@ function SideBar({ onRequireAuth }) {
                                     <div className='flex gap-1'>
                                         <button
                                             onClick={() => setShowBilling(true)}
-                                            className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-yellow-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'>
+                                            className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-yellow-600 cursor-pointer hover:bg-white/8 hover:text-slate-400 transition-all duration-150'>
                                             <LuCoins size={16} />
                                         </button>
-                                        <button className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-600 cursor-pointer hover:bg-white/[0.08] hover:text-slate-400 transition-all duration-150'
+                                        <button className='flex items-center justify-center w-7 h-7 rounded-[7px] border-none bg-transparent text-slate-600 cursor-pointer hover:bg-white/8 hover:text-slate-400 transition-all duration-150'
                                             onClick={handleLogout}
                                         >
                                             <LuLogOut size={16} />

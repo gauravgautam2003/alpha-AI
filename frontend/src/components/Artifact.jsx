@@ -67,14 +67,14 @@ function Artifact() {
         return "plainText"
     }
 
-    const PanelContent = ({onClose}) => {
+    const renderPanelContent = (onClose) => {
         return (
             <>
                 {!collapsed ? (
                     <div className='flex flex-col h-full'>
                         <div className='h-14 px-4 border-b border-white/10  flex items-center gap-4 shrink-0'>
                             <button className='flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/20 transition-colors duration-150 bg-transparent border-none cursor-pointer shrink-0' onClick={onClose ?? (() => setCollapsed(true))}>
-                                {onClose ? <LuX size={16}/> : <LuPanelRightClose size={16} />}
+                                {onClose ? <LuX size={16} /> : <LuPanelRightClose size={16} />}
                             </button>
 
                             <div className='flex items-center gap-2 flex-1 min-w-0'>
@@ -88,7 +88,7 @@ function Artifact() {
                                 <div className='flex items-center gap-1 shrink-0'>
                                     <button
                                         onClick={handleCopy}
-                                        className='flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200 rounded-lggap-1.5 px-2.5 py-1.5 text-[11px] font-mediumbg-transparent border-none cursor-pointer'>
+                                        className='flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200 rounded-lg bg-transparent border-none cursor-pointer'>
                                         {copyCode ? <LuCheck size={15} /> : <LuCopy size={15} />}
                                     </button>
                                 </div>
@@ -115,7 +115,7 @@ function Artifact() {
 
                         {
                             tab == "Code" && (
-                                <div className='flex border-b border-white/10 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0'>
+                                <div className='flex border-b border-white/10 overflow-x-auto scrollbar-none shrink-0'>
                                     {
                                         artifacts[0]?.files?.map((file, index) => (
                                             <button
@@ -213,13 +213,13 @@ function Artifact() {
                             className='lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm'
                         />
                         <motion.div
-                            initial={{x: "100%"}}
-                            animate={{x: 0}}
-                            exit={{x: "100%"}}
-                            transition={{duration: 0.25, ease: "easeInOut"}}
-                            className='lg:hidden fixed inset-y-0  right-0 z-50 w-[88vw] max-w-[420px] border-l border-white/[0.06] overflow-hidden'
+                            initial={{ x: "100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "100%" }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className='lg:hidden fixed inset-y-0 right-0 z-50 w-[88vw] max-w-140 border-l border-white/6 overflow-hidden'
                         >
-                            <PanelContent onClose={() => setMobileOpen(false)}/>
+                            {renderPanelContent(() => setMobileOpen(false))}
                         </motion.div>
                     </>
                 }
@@ -234,7 +234,7 @@ function Artifact() {
                 }}
                 className='glass-panel hidden xl:flex h-full border-l border-white/70 flex-col overflow-hidden shrink-0'
             >
-                <PanelContent />
+                {renderPanelContent()}
             </motion.div>
         </>
     )
