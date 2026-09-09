@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Alpha AI">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22d3ee"/>
+      <stop offset="0.55" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="18" y1="12" x2="46" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ecfeff"/>
+      <stop offset="1" stop-color="#bae6fd"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#06111f"/>
+  <rect x="4" y="4" width="56" height="56" rx="15" fill="url(#bg)"/>
+  <path d="M18 47 29.5 17h5L46 47h-6.2l-2.3-6.7H26.4L24.1 47H18Zm10.3-12.2h7.3L32 24.2l-3.7 10.6Z" fill="url(#shine)"/>
+  <path d="m47 12 1.4 3.6L52 17l-3.6 1.4L47 22l-1.4-3.6L42 17l3.6-1.4L47 12Z" fill="#fff" opacity=".9"/>
+</svg>

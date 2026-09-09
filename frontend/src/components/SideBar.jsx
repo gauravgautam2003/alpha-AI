@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LuCoins, LuLogOut, LuMenu, LuMessageSquare, LuPanelLeft, LuPanelRight, LuPlus, LuSparkles } from "react-icons/lu";
+import { LuCoins, LuLogOut, LuMenu, LuMessageSquare, LuPanelLeft, LuPanelRight, LuPlus, LuSparkles, LuX } from "react-icons/lu";
 import { HiOutlinePencilAlt, HiPlus } from "react-icons/hi";
 import { FaUser } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,7 +12,7 @@ import BillingDrawer from './BillingDrawer';
 
 
 
-function SideBar() {
+function SideBar({ onRequireAuth }) {
     const [collapsed, setCollapsed] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [showBilling, setShowBilling] = useState(false);
@@ -128,7 +128,7 @@ function SideBar() {
                             <LuPanelLeft />
                         </button>
 
-                        <button className='lg:hidden flex items-center justify-center w-7 h-7  rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer' onClick={() => setMobileOpen(flase)}>
+                        <button className='lg:hidden flex items-center justify-center w-7 h-7  rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-150 bg-transparent border-none cursor-pointer' onClick={() => setMobileOpen(false)}>
                             <LuX />
                         </button>
 
@@ -230,6 +230,19 @@ function SideBar() {
                                     </div>
                                 </motion.div>
                             </>
+                        )}
+                        {!userData && (
+                            <motion.button
+                                type='button'
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.22 }}
+                                onClick={() => onRequireAuth?.("signup")}
+                                className='blue-action mb-2 flex w-full items-center justify-center gap-2 rounded-xl border-none py-3.5 text-xs font-semibold transition-all'
+                            >
+                                <LuSparkles size={14} />
+                                Create account
+                            </motion.button>
                         )}
                     </div>
                 </div>

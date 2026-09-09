@@ -8,8 +8,8 @@ import { addConversation, setConversationTitle, setSelectedConversation } from '
 import { updateConversation } from '../features/updateConversation';
 import { motion } from 'motion/react';
 
-function ChatInput({ draft, onDraftChange }) {
-    dispatch(setIsLoading(true))
+function ChatInput({ draft, onDraftChange, onRequireAuth }) {
+    const { userData } = useSelector(state => state.user);
     const { selectedConversation } = useSelector(state => state.conversation);
     const [selectedAgent, setSelectedAgent] = useState("Auto");
     const { isLoading } = useSelector(state => state.message)
@@ -18,11 +18,17 @@ function ChatInput({ draft, onDraftChange }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const fileRef = useRef(null)
     const dispatch = useDispatch();
+    dispatch(setIsLoading(true))
 
 
     const handleSendMessage = async () => {
         const value = draft.trim();
         if (!value || isSending) return;
+
+        if (!userData) {
+            onRequireAuth?.();
+            return;
+        }
 
         setIsSending(true);
         setRequestError("");
@@ -152,8 +158,7 @@ function ChatInput({ draft, onDraftChange }) {
                                 </div>
 
                                 <button className='mt-2' onClick={() => {
-                                    setSelectedFile
-                                        (null); fileRef.current.value = ""
+                                    setSelectedFile(null); fileRef.current.value = ""
                                 }}><LuX size={14} className='text-slate-500 hover:text-white' /></button>
                             </div>
                         </div>
