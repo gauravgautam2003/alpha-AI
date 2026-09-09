@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuZap } from "react-icons/lu";
+import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
 import { addMessage, setArtifacts } from '../redux/messageSlice';
@@ -47,19 +47,20 @@ function ChatInput({ draft, onDraftChange }) {
             dispatch(addMessage({ role: "user", content: value }));
             onDraftChange("");
 
-            
+
             const formData = new FormData()
             formData.append("prompt", value.trim())
             formData.append("conversationId", conversation._id)
             formData.append("agent", selectedAgent.toLowerCase())
             formData.append("file", selectedFile)
-            
+
             const data = await sendMessage(formData);
-            
+
             const responseText = typeof data === 'string'
                 ? data
                 : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
 
+            setSelectedFile(null)
             dispatch(setArtifacts(data?.artifacts || []));
             dispatch(addMessage({
                 role: "assistant",
@@ -132,6 +133,27 @@ function ChatInput({ draft, onDraftChange }) {
                     })}
                 </div>
 
+                {
+                    selectedFile && (
+                        <div className="my-3">
+                            <div className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                                {
+                                    selectedFile.type === "application/pdf" ? <LuFileText className='text-red-400' size={14} /> : selectedFile.type.startsWith("image/") && <img src={URL.createObjectURL(selectedFile)} alt="image" className='h-10 w-10 rounded-xl object-cover mt-3' />
+                                }
+                                <div>
+                                    <p className='text-xs text-whte'>{selectedFile?.name}</p>
+                                    <p className='text-[10px] text-slate-500'>{Math.ceil(selectedFile.size)} KB</p>
+                                </div>
+
+                                <button className='mt-2' onClick={() => {
+                                    setSelectedFile
+                                        (null); fileRef.current.value = ""
+                                }}><LuX size={14} className='text-slate-500 hover:text-white' /></button>
+                            </div>
+                        </div>
+                    )
+                }
+
                 <textarea
                     placeholder='Ask Anything...'
                     onChange={(e) => onDraftChange(e.target.value)}
@@ -152,10 +174,10 @@ function ChatInput({ draft, onDraftChange }) {
 
                         <input type="file" accept='pdf, image/*' hidden ref={fileRef} onChange={(e) => {
                             const file = e.target.file[0]
-                            if(file) {
+                            if (file) {
                                 setSelectedFile(file)
                             }
-                        }}/>
+                        }} />
 
                         <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500' onClick={() => fileRef.current.click()}>
                             <LuPaperclip size={16} />

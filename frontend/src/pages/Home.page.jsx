@@ -44,7 +44,7 @@ const Home = () => {
     }
     const googleLogin = async () => {
         try {
-            const data = await signInWithPopup(auth, googleProvider);
+            const{ data } = await signInWithPopup(auth, googleProvider);
             let token = await data.user.getIdToken();
             await handleLogin(token);
         } catch (error) {

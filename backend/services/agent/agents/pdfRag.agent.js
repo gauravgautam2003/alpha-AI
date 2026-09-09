@@ -24,7 +24,7 @@ export const pdfRagAgent = async (state) => {
         const store = await vectorStore(docs, collectionName)
 
         const relevantDocs = await store.similaritySearch(state.prompt, 5)
-        const context = relevantDocs.map(data => data.pageContent)
+        const context = relevantDocs.map(data => data.pageContent).join("\n\n")
 
         const llm = await getModel("pdfRag")
 
