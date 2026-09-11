@@ -45,7 +45,7 @@ function MessageArea({ onSuggestion }) {
                 </>
             ) : (
                 <>
-                    <div className='max-w-4xl mx-auto space-y-5 pb-4'>
+                    <div className='max-w-6xl mx-auto space-y-5 pb-4'>
                         {messages?.map((msg, idx) => (
                             <motion.div
                                 key={msg?._id || idx}

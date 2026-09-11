@@ -127,7 +127,7 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
     ]
     return (
         <div className='w-full overflow-hidden px-3 md:px-6 pb-5 pt-2 shrink-0'>
-            <div className='mirror-surface max-w-4xl mx-auto flex flex-col gap-3 rounded-3xl px-4 pt-3.5 pb-3'>
+            <div className='mirror-surface max-w-5xl mx-auto flex flex-col gap-3 rounded-3xl px-4 pt-3.5 pb-3'>
                 <div className='flex gap-2 flex-wrap pr-3'>
                     {agents.map((agent) => {
                         const isActive = selectedAgent === agent.label

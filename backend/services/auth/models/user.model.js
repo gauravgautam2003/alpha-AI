@@ -11,7 +11,14 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true
+    },
+    passwordHash: {
+        type: String,
+        select: false
     },
     avatar: {
         type: String
@@ -26,7 +33,7 @@ const userSchema = new mongoose.Schema({
     },
     totalCredits: {
         type: Number,
-        dafault: 100
+        default: 100
     },
     planExpiresAt: Date
 }, {

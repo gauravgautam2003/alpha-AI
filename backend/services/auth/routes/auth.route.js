@@ -1,7 +1,10 @@
 import express from "express";
-import { deductCredits, login, logout, updateUserPayment } from "../controllers/auth.controller.js";
+import { deductCredits, login, logout, requestOtp, updateUserPayment, verifyOtp } from "../controllers/auth.controller.js";
 
 const router = express.Router();
+
+router.post("/request-otp", requestOtp);
+router.post("/verify-otp", verifyOtp);
 
 /**
  * @name login router

@@ -1,4 +1,4 @@
-import { LuEllipsis, LuMessageSquare, LuShare2, LuSparkles } from 'react-icons/lu'
+import {  LuMessageSquare,  LuSparkles } from 'react-icons/lu'
 import { useSelector } from 'react-redux'
 
 function Nav() {
@@ -21,8 +21,7 @@ function Nav() {
             <div className='hidden sm:flex items-center text-[10px] font-semibold text-sky-500 bg-black/10 border border-white/30 px-2.5 py-1 rounded-full'>
                 <LuSparkles size={11} className='mr-1' /> {messages?.length || 0} messages
             </div>
-            <button className='icon-control hidden sm:inline-flex' type='button' aria-label='Share conversation'><LuShare2 size={15} /></button>
-            <button className='icon-control' type='button' aria-label='Conversation options'><LuEllipsis size={17} /></button>
+            
         </header>
     )
 }

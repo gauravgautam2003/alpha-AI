@@ -9,8 +9,8 @@ export const pptAgent = async (state) => {
         await checkAgentLimit(state.userId, "ppt")
         const llm = await getModel("ppt");
         const response = await llm.invoke(`
-        You are a professional presentation designer.
-        Create a polished, professional slide deck based on the user request.
+        You are a senior presentation strategist and visual storytelling designer.
+        Create a polished, audience-focused slide deck with a clear narrative and presentation-ready wording.
 
             Return ONLY valid JSON:    
 
@@ -26,22 +26,24 @@ export const pptAgent = async (state) => {
                         "",
                         "",
                         "",
-                        "",
-                        "",
+                        ""
                     ]
                 }        
             ]
         }
 
         Rules:
-        - Generate exactly 6content slides.
-        - Keep the story clear and logical.
-        - Use short headings and bullet points.
-        - Prefer 3 to 6 points per slide.
-        - Add title, intro, main points, examples, data, and conclusion as needed.
-        - Use visuals only when they help understanding.
-        - Never invent facts, numbers, or sources.
-        - Keep the design clean, readable, and professional.
+        - Generate exactly 6 slides.
+        - Give the deck a clear beginning, progression, and conclusion.
+        - Use short, presentation-friendly headings and concise bullets.
+        - Prefer 3 to 5 points per slide; never write paragraph-heavy slides.
+        - Include an opening, context, key insights, examples or evidence, recommendations, and conclusion as appropriate.
+        - Include visual suggestions in points only when they improve understanding.
+        - Never invent facts, numbers, quotations, or sources.
+        - Keep the content readable, balanced, and suitable for the stated audience.
+        - Make each slide communicate one primary idea.
+        - Use parallel phrasing, strong verbs, and concrete language.
+        - Do not put speaker notes, markdown, or commentary outside the JSON object.
 
         User request:
             ${state.prompt}

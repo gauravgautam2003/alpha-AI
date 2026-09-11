@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LuCheck, LuCopy, LuDownload, LuExternalLink, LuX } from 'react-icons/lu';
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighLighter } from "react-syntax-highlighter"
@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "motion/react";
 function MessageBubble({ role, content, images = [], artifacts = [] }) {
     const [lightBox, setLightBox] = useState(null);
     const [copyCode, setCopyCode] = useState("");
+    const [visibleContent, setVisibleContent] = useState("");
 
     const copySelectCode = async (code) => {
         await navigator.clipboard.writeText(code)
@@ -27,6 +28,34 @@ function MessageBubble({ role, content, images = [], artifacts = [] }) {
             ? (content.content || content.text || content.message || JSON.stringify(content, null, 2))
             : String(content ?? '');
 
+    useEffect(() => {
+        if (isUser || !formattedContent) return undefined;
+
+        const words = formattedContent.match(/\S+\s*/g) || [];
+        let wordIndex = 0;
+        let resetTimeoutId;
+        let timeoutId;
+        let cancelled = false;
+
+        const revealNextWord = () => {
+            if (cancelled) return;
+            wordIndex += 1;
+            setVisibleContent(words.slice(0, wordIndex).join(""));
+            if (wordIndex < words.length) {
+                timeoutId = window.setTimeout(revealNextWord, 35);
+            }
+        };
+
+        resetTimeoutId = window.setTimeout(() => setVisibleContent(""), 0);
+        timeoutId = window.setTimeout(revealNextWord, 35);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(resetTimeoutId);
+            window.clearTimeout(timeoutId);
+        };
+    }, [formattedContent, isUser]);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -34,7 +63,7 @@ function MessageBubble({ role, content, images = [], artifacts = [] }) {
             transition={{ duration: 0.24, ease: "easeOut" }}
             className={`flex items-end gap-2.5 ${isUser ? "justify-end" : "justify-start"}`}
         >
-            <div className={`w-fit max-w-[92vw] md:max-w-[72%] px-4 py-2.5 rounded-2xl break-words overflow-hidden leading-relaxed
+            <div className={`w-fit max-w-[92vw] md:max-w-[86%] px-4 py-2.5 rounded-2xl break-words overflow-hidden leading-relaxed
                 ${isUser
                     ? "blue-action text-white rounded-tr-sm"
                     : "text-slate-700 rounded-tl-sm"
@@ -165,7 +194,7 @@ function MessageBubble({ role, content, images = [], artifacts = [] }) {
                         }
                     }}
                 >
-                    {formattedContent}
+                    {isUser ? formattedContent : visibleContent}
                 </Markdown>
             </div>
 

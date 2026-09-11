@@ -3,14 +3,6 @@ import { getModel } from "../config/llmModels.js";
 export const router = async (state) => {
     const llm = await getModel("router");
 
-    // Respect manually selected agent
-    if (state.agent && state.agent !== "auto") {
-        return {
-            ...state,
-            agent: state.agent
-        };
-    }
-
     if (state.file) {
         if (state.file.mimetype == "application/pdf") {
             return {
@@ -26,6 +18,14 @@ export const router = async (state) => {
                 agent: "imageAnalyzer"
             }
         }
+    }
+
+    // Uploaded files must use their reader/analyzer, even if the UI mode is PDF or Image.
+    if (state.agent && state.agent !== "auto") {
+        return {
+            ...state,
+            agent: state.agent
+        };
     }
 
 

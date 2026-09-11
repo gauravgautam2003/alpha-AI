@@ -180,6 +180,12 @@ REDIS_URL=redis://localhost:6379
 PORT=5001
 MONGODB_URI=your_mongodb_connection_string
 REDIS_URL=redis://localhost:6379
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+SMTP_FROM=your-email@gmail.com
 ```
 
 ### Chat service (`backend/services/chat/.env`)

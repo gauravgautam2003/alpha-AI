@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, signInWithPopup, updateProfile } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../utils/firebase"
 import api from '../utils/axios';
 
 import { FcGoogle } from "react-icons/fc";
 import { LuArrowRight, LuLockKeyhole, LuMail, LuSparkles, LuUserRound, LuX } from "react-icons/lu";
+import { RiLockPasswordLine } from "react-icons/ri";
+
 import { AnimatePresence, motion } from "motion/react";
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserData } from '../redux/userSlice';
@@ -12,6 +14,8 @@ import SideBar from '../components/SideBar';
 import ChatArea from '../components/ChatArea';
 import Artifact from '../components/Artifact';
 import AppSkeleton from '../skeletons/AppSkeleton';
+import { requestOtp } from '../features/requestOtp';
+import { verifyOtp } from '../features/verifyOtp';
 
 
 const Home = () => {
@@ -23,6 +27,8 @@ const Home = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [verificationSent, setVerificationSent] = useState(false);
     const [verificationEmail, setVerificationEmail] = useState("");
+    const [pendingCredentials, setPendingCredentials] = useState(null);
+    const [otp, setOtp] = useState("");
     const [showAuth, setShowAuth] = useState(false);
 
     const handleLogin = useCallback(async (token) => {
@@ -37,25 +43,6 @@ const Home = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                if (isSignInWithEmailLink(auth, window.location.href)) {
-                    setShowAuth(true);
-                    const email = localStorage.getItem("alpha-ai-pending-email");
-                    if (!email) {
-                        throw new Error("Email is required to complete sign in");
-                    }
-
-                    const { user } = await signInWithEmailLink(auth, email, window.location.href);
-                    const name = localStorage.getItem("alpha-ai-pending-name");
-                    if (name) {
-                        await updateProfile(user, { displayName: name });
-                    }
-                    localStorage.removeItem("alpha-ai-pending-email");
-                    localStorage.removeItem("alpha-ai-pending-name");
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    await handleLogin(await user.getIdToken(true));
-                    return;
-                }
-
                 const { data } = await api.get("/api/me");
                 if (data && (data._id || data.user)) {
                     dispatch(setUserData(data));
@@ -86,26 +73,17 @@ const Home = () => {
         const formData = new FormData(event.currentTarget);
         const name = formData.get("name")?.trim();
         const email = formData.get("email");
+        const password = formData.get("password");
 
         setIsSubmitting(true);
         try {
-            localStorage.setItem("alpha-ai-pending-email", email);
-            if (authMode === "signup") {
-                localStorage.setItem("alpha-ai-pending-name", name);
-            } else {
-                localStorage.removeItem("alpha-ai-pending-name");
-            }
-
-            await sendSignInLinkToEmail(auth, email, {
-                url: window.location.origin,
-                handleCodeInApp: true
-            });
+            const credentials = { name, email, password, mode: authMode };
+            await requestOtp(credentials);
+            setPendingCredentials(credentials);
             setVerificationEmail(email);
             setVerificationSent(true);
         } catch (error) {
-            setLoginError(error.code === "auth/invalid-action-code"
-                ? "This email link is no longer valid. Please request a new one."
-                : "Could not send the email. Please try again.");
+            setLoginError(error.response?.data?.message || "Could not send the OTP. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -114,12 +92,27 @@ const Home = () => {
     const resendVerificationEmail = async () => {
         setLoginError("");
         try {
-            await sendSignInLinkToEmail(auth, verificationEmail, {
-                url: window.location.origin,
-                handleCodeInApp: true
-            });
+            await requestOtp(pendingCredentials);
+            setOtp("");
         } catch {
-            setLoginError("Please wait a moment before requesting another email.");
+            setLoginError("Could not resend OTP. Please try again.");
+        }
+    }
+
+    const confirmOtp = async (event) => {
+        event.preventDefault();
+        setLoginError("");
+        setIsSubmitting(true);
+        try {
+            const data = await verifyOtp(verificationEmail, otp);
+            dispatch(setUserData(data));
+            setShowAuth(false);
+            setVerificationSent(false);
+            setOtp("");
+        } catch (error) {
+            setLoginError(error.response?.data?.message || "Invalid or expired OTP.");
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -171,16 +164,21 @@ const Home = () => {
                                     </div>
                                 </div>
 
-                                {verificationSent && <motion.div className='flex flex-col items-center py-8 text-center' initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                                    <div className='mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 text-cyan-300'>
-                                        <LuMail size={28} />
-                                    </div>
-                                    <h2 className='text-xl font-semibold text-white'>Verify your email</h2>
-                                    <p className='mt-3 max-w-[320px] text-sm leading-6 text-slate-400'>We sent a verification link to <span className='font-semibold text-cyan-200'>{verificationEmail}</span>. Verify it, then return here to enter your workspace.</p>
-                                    {loginError && <p role='alert' className='mt-4 rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{loginError}</p>}
-                                    <button type='button' onClick={resendVerificationEmail} className='blue-action mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold'>Send link again <LuArrowRight size={16} /></button>
-                                    <button type='button' onClick={resendVerificationEmail} className='mt-4 text-xs font-semibold text-cyan-300 transition-colors hover:text-cyan-200'>Resend verification email</button>
-                                </motion.div>}
+                                {
+                                    verificationSent && <motion.div className='flex flex-col items-center py-8 text-center' initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                                        <div className='mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 text-cyan-300'>
+                                            <LuMail size={28} />
+                                        </div>
+                                        <h2 className='text-xl font-semibold text-white'>Verify your email</h2>
+                                        <p className='mt-3 max-w-[320px] text-sm leading-6 text-slate-400'>We sent a 6-digit OTP to <span className='font-semibold text-cyan-200'>{verificationEmail}</span>.</p>
+                                        {loginError && <p role='alert' className='mt-4 rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{loginError}</p>}
+                                        <form onSubmit={confirmOtp} className='mt-6 flex w-full flex-col gap-3'>
+                                            <input value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode='numeric' autoComplete='one-time-code' placeholder='Enter OTP' aria-label='Email OTP' className='w-full rounded-xl border border-white/10 bg-white/6 px-3 py-3 text-center text-lg tracking-[0.35em] text-white outline-none focus:border-cyan-300/60' required />
+                                            <button type='submit' disabled={isSubmitting || otp.length !== 6} className='blue-action flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60'>Confirm OTP <LuArrowRight size={16} /></button>
+                                        </form>
+                                        <button type='button' onClick={resendVerificationEmail} className='mt-4 text-xs font-semibold text-cyan-300 transition-colors hover:text-cyan-200'>Resend OTP</button>
+                                    </motion.div>
+                                }
 
                                 {!verificationSent && <>
                                     <div className='mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/4 p-1'>
@@ -218,10 +216,19 @@ const Home = () => {
                                                     <input id='email' name='email' placeholder='you@example.com' className='w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/8 focus:ring-4 focus:ring-cyan-300/10' type='email' autoComplete='email' required />
                                                 </div>
                                             </div>
-                                            {loginError && <p role='alert' className='rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{loginError}</p>}
+                                            <div>
+                                                <label htmlFor='password' className='mb-1.5 block text-xs font-semibold text-slate-300'>Password</label>
+                                                <div className='relative'>
+                                                    <RiLockPasswordLine size={16} className='absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500' />
+                                                    <input id='password' name='password' placeholder='enter your password' className='w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-cyan-300/60 focus:bg-white/8 focus:ring-4 focus:ring-cyan-300/10' type='password' autoComplete='password' required />
+                                                </div>
+                                            </div>
+                                            {
+                                                loginError && <p role='alert' className='rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{loginError}</p>
+                                            }
 
                                             <button type='submit' disabled={isSubmitting} className='blue-action mt-1 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60'>
-                                                {isSubmitting ? "Sending link..." : authMode === "login" ? "Email me a sign-in link" : "Create with email link"}
+                                                {isSubmitting ? "Sending OTP..." : authMode === "login" ? "Send login OTP" : "Send signup OTP"}
                                                 {!isSubmitting && <LuArrowRight size={16} />}
                                             </button>
                                         </motion.form>

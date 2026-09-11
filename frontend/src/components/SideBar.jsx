@@ -23,6 +23,7 @@ function SideBar({ onRequireAuth }) {
     const dispatch = useDispatch();
     const avatar = userData?.avatar || userData?.user?.avatar;
     const userName = userData?.name || userData?.user?.name || "user";
+    const userEmail = userData?.email || userData?.user?.email || "";
 
     useEffect(() => {
         const getConv = async () => {
@@ -210,7 +211,7 @@ function SideBar({ onRequireAuth }) {
 
                                     <div className='flex-1 min-w-0'>
                                         <p className='text-[13.5px] font-semibold text-slate-100 truncate'>{userName}</p >
-                                        <p className='text-[11px] text-slate-600 mt-px'>{userData?.plan || "free"}</p>
+                                        <p className='text-[11px] text-slate-500 mt-px truncate'>{userEmail}</p>
                                     </div>
                                     <div className='flex gap-1'>
                                         <button

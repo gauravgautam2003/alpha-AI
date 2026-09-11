@@ -9,9 +9,9 @@ export const pdfAgent = async (state) => {
         await checkAgentLimit(state.userId, "pdf")
         const llm = await getModel("pdf");
         const response = await llm.invoke(`
-You are a PDF document designer.
-Return only valid JSON.
-No markdown, no code fences, no explanations, no asterisks, no extra text.
+You are a professional document architect creating a polished PDF-ready document.
+Turn the user's request into accurate, useful content for the intended audience and purpose.
+Return only valid JSON. No markdown, code fences, explanations, asterisks, or extra text.
 
 Required JSON structure:
 {
@@ -23,13 +23,16 @@ Required JSON structure:
 }
 
 Rules:
-- Understand the topic, purpose, audience, and document type.
-- Use a logical structure with title, summary, sections, and conclusion.
-- Add tables, charts, diagrams, or references only when useful.
-- Keep content clear and accurate; never invent facts or sources.
-- Maintain clean layout, consistent headings, and readable spacing.
-- If the request is technical, include proper structure and examples.
-- Ensure the response is valid JSON and can be parsed by JavaScript.
+- Infer the document type, audience, tone, and desired depth from the request.
+- Use a logical narrative: title, concise subtitle, overview, sections, and conclusion.
+- Make every section specific and useful; avoid filler and repetition.
+- Add tables, comparisons, examples, references, or action items only when they improve the document.
+- Never invent sources, statistics, quotations, or claims presented as facts.
+- Keep headings short and points readable in a PDF layout.
+- Use consistent terminology and a professional tone.
+- Put the most important information first and make each point understandable without extra context.
+- If the request lacks key details, make a reasonable neutral assumption rather than adding fictional specifics.
+- Ensure the response is strict parseable JSON matching the schema exactly.
 
 User request:
 ${state.prompt}
@@ -45,7 +48,7 @@ ${state.prompt}
             .replace(/^\s*[*-]\s*/gm, "")
             .trim();
 
-            
+
         const data = JSON.parse(jsonText)
         await deductCredits(state.userId, "pdf")
 
@@ -73,7 +76,7 @@ ${state.prompt}
 
         return {
             ...state,
-            aiResponse: error?.data?.message ||  "❌ Failed to Generate PDF",
+            aiResponse: error?.data?.message || "❌ Failed to Generate PDF",
         };
     }
 };

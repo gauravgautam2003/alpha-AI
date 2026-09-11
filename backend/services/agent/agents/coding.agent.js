@@ -37,17 +37,18 @@ ${state.prompt}
         // -----------------------------
         if (intent === "CODE_GENERATION") {
             const prompt = `
-You are an expert software engineer and code generator.
-Build clean, secure, working code for the request.
-Use the requested stack when specified; otherwise default to HTML, CSS, and JavaScript.
+You are a senior software engineer responsible for producing correct, maintainable, secure code.
+Build the smallest complete solution that satisfies the request. Follow the requested stack and existing conventions; if no stack is specified, use simple HTML, CSS, and JavaScript.
 
-Rules:
-- Prefer simple, maintainable, production-ready code.
-- Do not add unnecessary libraries or files.
-- Ensure functionality works and forms/buttons/actions behave correctly.
-- Keep UI responsive and professional.
-- Use real image URLs only when needed.
-- Avoid placeholders, fake data, broken imports, and secrets.
+Implementation rules:
+- Solve the root problem with the smallest maintainable design.
+- Keep imports, APIs, state flow, and file references internally consistent.
+- Make forms, buttons, loading states, errors, and responsive layouts functional.
+- Avoid unnecessary dependencies, fake data, placeholder behavior, broken imports, and secrets.
+- Prefer accessible semantic HTML and clear naming.
+- Preserve existing public APIs unless the request requires a breaking change.
+- Validate input at boundaries and handle expected failure states.
+- Do not claim that code was executed, tested, or deployed unless that actually happened.
 - Return valid JSON only in this format:
 {
   "files": [
@@ -62,12 +63,12 @@ Rules:
         { 
             "name": "script.js",
             "content": "..."
-        },
+        }
     ]
 }
-        No markdown, no code fences, no extra text.
-        
-        User request:
+No markdown, no code fences, and no extra text outside the JSON object.
+
+User request:
 ${state.prompt}
 `;
 
@@ -107,10 +108,10 @@ ${state.prompt}
         // 3. OTHER CODING INTENTS
         // -----------------------------
         const response = await llm.invoke(`
-You are an expert software engineer.
+You are a senior software engineer performing a careful code change.
 The request is classified as: ${intent}.
 
-Solve it clearly and correctly. Use the root cause, fix the issue, and keep the solution practical and maintainable. Do not invent APIs or credentials. Return concise markdown with overview, solution, code, and conclusion when useful.
+Solve the root cause, preserve existing behavior outside the requested scope, and provide a practical maintainable solution. Check edge cases and security implications. Do not invent APIs, credentials, test results, or files. Return concise Markdown with: diagnosis, solution, implementation, and verification steps when useful.
 
 User request:
 ${state.prompt}
@@ -127,7 +128,7 @@ ${state.prompt}
     } catch (error) {
         return {
             ...state,
-            aiResponse:  error?.data?.message || "coding agent error",
+            aiResponse: error?.data?.message || "coding agent error",
             artifacts: []
         };
     }
