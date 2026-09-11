@@ -123,6 +123,11 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
             id: "search",
             icon: LuGlobe,
             label: "Search"
+        },
+        {
+            id: "resume",
+            icon: LuFileText,
+            label: "Resume"
         }
     ]
     return (

@@ -45,6 +45,7 @@ AVAILABLE AGENTS
 - pdf
 - ppt
 - image
+- resume
 
 ==================================================
 ROUTING RULES
@@ -133,6 +134,17 @@ Use "image" for:
 - Modify an image
 - Requests explicitly requiring an image
 
+RESUME:
+Use "resume" for:
+- Generate a resume
+- Create a CV
+- Edit a resume
+- Modify a CV
+- Format a resume
+- Create a professional resume document
+- Requests explicitly requiring a resume or CV
+
+
 ==================================================
 IMPORTANT PRIORITY RULES
 ==================================================
@@ -178,6 +190,7 @@ coding
 pdf
 ppt
 image
+resume
 
 ==================================================
 USER QUERY
@@ -198,7 +211,8 @@ ${state.prompt}
         "coding",
         "pdf",
         "ppt",
-        "image"
+        "image",
+        "resume"
     ];
 
     return {

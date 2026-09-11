@@ -9,6 +9,7 @@ import { pptAgent } from "../agents/ppt.agent.js";
 import { imageGenAgent } from "../agents/imageGen.agent.js";
 import { imageAnalyzerAgent } from "../agents/imageAnalyzer.agent.js";
 import { pdfRagAgent } from "../agents/pdfRag.agent.js";
+import { resumeAgent } from "../agents/resume.agent.js";
 
 const workflow = new StateGraph(agentState);
 
@@ -21,6 +22,7 @@ workflow.addNode("ppt", pptAgent);
 workflow.addNode("imageGen", imageGenAgent);
 workflow.addNode("pdfRag", pdfRagAgent);
 workflow.addNode("imageAnalyzer", imageAnalyzerAgent);
+workflow.addNode("resume", resumeAgent);
 
 
 // connect agents
@@ -45,6 +47,8 @@ workflow.addConditionalEdges("router", (state) => {
             return "pdfRag"
         case "imageAnalyzer":
             return "imageAnalyzer"
+        case "resume":
+            return "resume"    
         default:
             return "chat"
     }
@@ -58,7 +62,8 @@ workflow.addConditionalEdges("router", (state) => {
     ppt: "ppt",
     imageGen: "imageGen",
     pdfRag: "pdfRag",
-    imageAnalyzer: "imageAnalyzer"
+    imageAnalyzer: "imageAnalyzer",
+    resume: "resume"
 })
 
 //connect agents with end
@@ -70,5 +75,6 @@ workflow.addEdge("ppt", "__end__");
 workflow.addEdge("imageGen", "__end__");
 workflow.addEdge("pdfRag", "__end__");
 workflow.addEdge("imageAnalyzer", "__end__");
+workflow.addEdge("resume", "__end__");
 
 export const graph = workflow.compile();
