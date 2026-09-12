@@ -114,6 +114,7 @@ const createSession = async (user, res) => {
 
     await redis.set(`user-session:${user._id}`, sessionId, "EX", 7 * 24 * 60 * 60);
     await redis.set(`session:${sessionId}`, JSON.stringify(session), "EX", 7 * 24 * 60 * 60);
+    
     res.cookie("session", sessionId, {
         httpOnly: true,
         secure: false,
@@ -126,41 +127,63 @@ const createSession = async (user, res) => {
 export const requestOtp = async (req, res) => {
     try {
         const { name, email, password, mode = "signup" } = req.body;
+
         const normalizedEmail = email?.trim().toLowerCase();
 
         if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-            return res.status(400).json({ message: "Please enter a valid email" });
+            return res.status(400).json({
+                message: "Please enter a valid email"
+            });
         }
         if (!password || password.length < 8) {
-            return res.status(400).json({ message: "Password must be at least 8 characters" });
+            return res.status(400).json({
+                message: "Password must be at least 8 characters"
+            });
         }
 
         const existingUser = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
         if (mode === "signup" && existingUser) {
-            return res.status(409).json({ message: "Email is already registered" });
+            return res.status(409).json({
+                message: "Email is already registered"
+            });
         }
+
         if (mode === "login" && (!existingUser || !existingUser.passwordHash || !isPasswordValid(password, existingUser.passwordHash))) {
-            return res.status(401).json({ message: "Invalid email or password" });
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
         }
+
         if (mode === "signup" && !name?.trim()) {
-            return res.status(400).json({ message: "Name is required" });
+            return res.status(400).json({
+                message: "Name is required"
+            });
         }
 
         const otp = String(randomInt(100000, 1000000));
+
         const pendingOtp = JSON.stringify({
             otpHash: hashValue(otp),
             name: name?.trim(),
             passwordHash: mode === "signup" ? hashPassword(password) : null,
             mode
         });
+
         await sendOtpEmail(normalizedEmail, otp);
         await redis.set(`auth-otp:${normalizedEmail}`, pendingOtp, "EX", OTP_TTL_SECONDS);
 
-        return res.status(200).json({ message: "OTP sent to your email", email: normalizedEmail });
+        return res.status(200).json({
+            message: "OTP sent to your email",
+            email: normalizedEmail
+        });
     } catch (error) {
+
         console.error("request OTP error:", error.code, error.responseCode, error.message);
+
         if (error.code === "SMTP_NOT_CONFIGURED") {
-            return res.status(503).json({ message: "Email service is not configured. Add SMTP settings to auth/.env" });
+            return res.status(503).json({
+                message: "Email service is not configured. Add SMTP settings to auth/.env"
+            });
         }
         return res.status(502).json({
             message: "Could not send OTP email. Check SMTP settings.",
@@ -226,28 +249,7 @@ export const login = async (req, res) => {
             await user.save();
         }
 
-        const sessionId = randomUUID();
-        await redis.set(`user-session:${user?._id}`, { sessionId }, "EX", 7 * 24 * 60 * 60)
-        await redis.set(`session:${sessionId}`, JSON.stringify({
-            userId: user._id,
-            name: user.name,
-            email: user.email,
-            avatar: user.avatar,
-            plan: user.plan,
-            credits: user.credits,
-            totalCredits: user.totalCredits,
-            planExpiresAt: user.planExpiresAt
-
-        }), "EX", 7 * 24 * 60 * 60)
-
-        res.cookie("session", sessionId, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        })
-
+        await createSession(user, res);
 
         return res.status(200).json({
             user,
@@ -271,7 +273,20 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
     try {
         const sessionId = req.cookies?.session;
-        await redis.del(`session:${sessionId}`);
+        if (sessionId) {
+            const sessionKey = `session:${sessionId}`;
+            const legacySessionKey = `session: ${sessionId}`;
+            const session = await redis.get(sessionKey) || await redis.get(legacySessionKey);
+
+            if (session) {
+                const { userId } = JSON.parse(session);
+                if (userId) {
+                    await redis.del(`user-session:${userId}`);
+                }
+            }
+
+            await redis.del(sessionKey, legacySessionKey);
+        }
 
         res.clearCookie("session", { path: "/" });
 

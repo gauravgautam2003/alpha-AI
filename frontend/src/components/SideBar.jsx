@@ -10,6 +10,8 @@ import { setUserData } from '../redux/userSlice';
 import { easeInOut, motion } from 'motion/react';
 import BillingDrawer from './BillingDrawer';
 import { openAuth } from '../redux/uiSlice';
+import { signOut } from 'firebase/auth';
+import { auth } from '../utils/firebase';
 
 
 
@@ -37,9 +39,16 @@ function SideBar() {
     const handleLogout = async () => {
         try {
             await logOut();
-            dispatch(setUserData(null));
         } catch (error) {
             console.error("logout error", error);
+        } finally {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("firebase logout error", error);
+            }
+            dispatch(setUserData(null));
+            dispatch(setSelectedConversation(null));
         }
     };
 
