@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Nav from './Nav'
 import MessageList from "./MessageList"
 import ChatInput from './ChatInput'
@@ -6,10 +6,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getMessages } from '../features/getMessage'
 import { setArtifacts, setMessage } from '../redux/messageSlice'
 
-function ChatArea({ onRequireAuth }) {
+function ChatArea() {
     const { selectedConversation } = useSelector(state => state.conversation);
     const dispatch = useDispatch();
-    const [draft, setDraft] = useState("");
 
     useEffect(() => {
         let cancelled = false;
@@ -44,8 +43,8 @@ function ChatArea({ onRequireAuth }) {
     return (
         <main className='relative flex-1 min-w-0 flex flex-col'>
             <Nav />
-            <MessageList onSuggestion={setDraft} />
-            <ChatInput draft={draft} onDraftChange={setDraft} onRequireAuth={onRequireAuth} />
+            <MessageList />
+            <ChatInput />
         </main>
     )
 }

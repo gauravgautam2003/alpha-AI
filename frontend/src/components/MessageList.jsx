@@ -1,13 +1,15 @@
 import MessageBubble from './MessageBubble';
 import { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'motion/react';
 import LoadingAnimation from './LoadingAnimation';
+import { setValue } from '../redux/uiSlice';
 
 
-function MessageArea({ onSuggestion }) {
+function MessageArea() {
     const { selectedConversation } = useSelector(state => state.conversation);
     const { messages, isLoading } = useSelector(state => state.message);
+    const dispatch = useDispatch();
     const messageContainerRef = useRef(null);
 
     useEffect(() => {
@@ -36,7 +38,7 @@ function MessageArea({ onSuggestion }) {
                     </div>
                     <div className='max-w-2xl mx-auto flex flex-wrap justify-center gap-2.5'>
                         {["Create a Netflix clone", "Explain Redis simply", "Build a modern dashboard", "Help me plan a project"].map((s, idx) => (
-                            <button key={s || idx} type='button' onClick={() => onSuggestion(s)} className='glass-button text-[13px] text-slate-600 px-3.5 py-2 rounded-xl transition-colors duration-150 cursor-pointer'>
+                            <button key={s || idx} type='button' onClick={() => dispatch(setValue(s))} className='glass-button text-[13px] text-slate-600 px-3.5 py-2 rounded-xl transition-colors duration-150 cursor-pointer'>
                                 {s}
                             </button>
                         ))}

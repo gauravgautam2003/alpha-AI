@@ -9,10 +9,11 @@ import { logOut } from '../features/logOut';
 import { setUserData } from '../redux/userSlice';
 import { easeInOut, motion } from 'motion/react';
 import BillingDrawer from './BillingDrawer';
+import { openAuth } from '../redux/uiSlice';
 
 
 
-function SideBar({ onRequireAuth }) {
+function SideBar() {
     const [collapsed, setCollapsed] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [showBilling, setShowBilling] = useState(false);
@@ -234,7 +235,7 @@ function SideBar({ onRequireAuth }) {
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.22 }}
-                                onClick={() => onRequireAuth?.("signup")}
+                                onClick={() => dispatch(openAuth("signup"))}
                                 className='blue-action mb-2 flex w-full items-center justify-center gap-2 rounded-xl border-none py-3.5 text-xs font-semibold transition-all'
                             >
                                 <LuSparkles size={14} />

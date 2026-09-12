@@ -16,20 +16,20 @@ import Artifact from '../components/Artifact';
 import AppSkeleton from '../skeletons/AppSkeleton';
 import { requestOtp } from '../features/requestOtp';
 import { verifyOtp } from '../features/verifyOtp';
+import { closeAuth, setAuthMode } from '../redux/uiSlice';
 
 
 const Home = () => {
     const { userData } = useSelector(state => state.user);
+    const { isOpen: showAuth, mode: authMode } = useSelector(state => state.ui.auth);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(true);
     const [loginError, setLoginError] = useState("");
-    const [authMode, setAuthMode] = useState("login");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [verificationSent, setVerificationSent] = useState(false);
     const [verificationEmail, setVerificationEmail] = useState("");
     const [pendingCredentials, setPendingCredentials] = useState(null);
     const [otp, setOtp] = useState("");
-    const [showAuth, setShowAuth] = useState(false);
 
     const handleLogin = useCallback(async (token) => {
         try {
@@ -106,7 +106,7 @@ const Home = () => {
         try {
             const data = await verifyOtp(verificationEmail, otp);
             dispatch(setUserData(data));
-            setShowAuth(false);
+            dispatch(closeAuth());
             setVerificationSent(false);
             setOtp("");
         } catch (error) {
@@ -123,8 +123,8 @@ const Home = () => {
     return (
         <div className='app-shell h-screen flex text-slate-700 overflow-hidden'>
 
-            <SideBar onRequireAuth={(mode = "login") => { setAuthMode(mode); setShowAuth(true); }} />
-            <ChatArea onRequireAuth={() => { setAuthMode("signup"); setShowAuth(true); }} />
+            <SideBar />
+            <ChatArea />
             <Artifact />
 
             {!userData && showAuth &&
@@ -158,7 +158,7 @@ const Home = () => {
                                     </div>
                                     <div className='flex items-center gap-3'>
                                         <LuSparkles size={20} className='mt-1 shrink-0 text-cyan-300' />
-                                        <button type='button' aria-label='Close authentication form' title='Back to chat' onClick={() => setShowAuth(false)} className='icon-control h-8 w-8 rounded-lg text-slate-400 hover:text-white'>
+                                        <button type='button' aria-label='Close authentication form' title='Back to chat' onClick={() => dispatch(closeAuth())} className='icon-control h-8 w-8 rounded-lg text-slate-400 hover:text-white'>
                                             <LuX size={16} />
                                         </button>
                                     </div>
@@ -183,7 +183,7 @@ const Home = () => {
                                 {!verificationSent && <>
                                     <div className='mb-6 grid grid-cols-2 rounded-xl border border-white/10 bg-white/4 p-1'>
                                         {[["login", "Sign in"], ["signup", "Create account"]].map(([mode, label]) => (
-                                            <button key={mode} type='button' onClick={() => { setAuthMode(mode); setLoginError(""); }} className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition-all ${authMode === mode ? "bg-white/10 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"}`}>
+                                            <button key={mode} type='button' onClick={() => { dispatch(setAuthMode(mode)); setLoginError(""); }} className={`rounded-lg px-3 py-2.5 text-xs font-semibold transition-all ${authMode === mode ? "bg-white/10 text-white shadow-lg" : "text-slate-500 hover:text-slate-300"}`}>
                                                 {label}
                                             </button>
                                         ))}
