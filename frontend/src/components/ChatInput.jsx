@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
+import { useEffect, useRef, useState } from 'react'
+import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuMicOff, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
 import { addMessage, setArtifacts, setIsLoading } from '../redux/messageSlice';
@@ -16,10 +16,49 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
     const [isSending, setIsSending] = useState(false);
     const [requestError, setRequestError] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+    const [listening, setListening] = useState(false)
+    const recognitionRef = useRef(null)
     const fileRef = useRef(null)
     const dispatch = useDispatch();
 
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        if (!SpeechRecognition) return;
 
+        const recognition = new SpeechRecognition();
+        recognition.lang = "es-US";
+        recognition.interimResults = true;
+        recognition.continuous = true;
+
+        recognition.onresult = (event) => {
+            let transcipt = "";
+
+            for(let index = event.resultIndex; index < event.results.length; index++) {
+                transcipt = transcipt + event.results[index][0].transcipt;
+
+            }
+
+            onDraftChange(transcipt)
+        }
+        recognition.onend = () => {
+            setListening(false)
+        }
+        recognitionRef.current = recognition
+    }, [])
+
+    const toggleMic = () => {
+        if(!recognitionRef.current) {
+            alert("speech recognition not supported")
+        }
+
+        if(listening) {
+            recognitionRef.current.stop();
+            setListening(false)
+        } else {
+            recognitionRef.current.start();
+            setListening(true)
+        }
+    }
     const handleSendMessage = async () => {
         const value = draft.trim();
         if (!value || isSending) return;
@@ -198,8 +237,8 @@ function ChatInput({ draft, onDraftChange, onRequireAuth }) {
                         <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500' onClick={() => fileRef.current.click()}>
                             <LuPaperclip size={16} />
                         </button>
-                        <button type='button' className='icon-control w-8 h-8 rounded-lg text-slate-500'>
-                            <LuMic size={16} />
+                        <button onClick={toggleMic} type='button' className={`icon-control w-8 h-8 rounded-lg  ${listening ? "bg-red-500 text-white" : "text-slate-600 hover:bg-white/[0.05]"}`}>
+                            {listening ? <LuMic size={16} /> : <LuMicOff size={16}/>}
                         </button>
                     </div>
 
