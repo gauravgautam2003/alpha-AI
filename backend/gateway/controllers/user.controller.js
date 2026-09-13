@@ -5,7 +5,11 @@ export const getCurrentUser = async (req, res) => {
             _id: req.user.userId,
             name: req.user.name,
             email: req.user.email,
-            avatar: req.user.avatar
+            avatar: req.user.avatar,
+            plan: req.user.plan || "free",
+            credits: req.user.credits ?? 100,
+            totalCredits: req.user.totalCredits ?? 100,
+            planExpiresAt: req.user.planExpiresAt || null
         };
         return res.status(200).json({
             user: userObj,
@@ -13,7 +17,7 @@ export const getCurrentUser = async (req, res) => {
             _id: req.user.userId
         });
     } catch (error) {
-        return res.status(400).json({message: `get current user error: ${error}`});
+        return res.status(400).json({message: `get current user error: ${error?.message || error}`});
     }
 }
 

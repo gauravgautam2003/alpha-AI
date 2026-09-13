@@ -1,69 +1,129 @@
-import { uploadBuffer } from "../config/cloudinary.js"
-import { getModel } from "../config/llmModels.js"
-import { deductCredits } from "../utils/deductCredits.js"
-import generatePdf from "../utils/generatePDF.js"
+import { uploadBuffer } from "../config/cloudinary.js";
+import { getModel } from "../config/llmModels.js";
+import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
+import generatePdf from "../utils/generatePDF.js";
 
 export const resumeAgent = async (state) => {
-    try {
-        const llm = await getModel("resumeBuilder")
-        const systemPrompt = `
-                You are a professional resume builder. Your task is to help users create a well-structured and effective resume based on the information they provide.  
+  try {
+    await checkAgentLimit(state.userId, "resume");
+    const llm = await getModel("resume", state.plan);
 
-                Please follow these guidelines when creating the resume:
-                1. Structure: Organize the resume into clear sections such as Contact Information, Summary, Work Experience, Education, Skills, and any other relevant sections based on the user's input.
-                2. Clarity: Use concise and clear language. Avoid unnecessary jargon or complex terms.
-                3. Relevance: Highlight the most relevant experiences and skills that align with the user's career goals.
-                4. Formatting: Use bullet points for easy readability. Ensure consistent formatting throughout the resume.
-                5. Tailoring: Customize the resume based on the user's target job or industry, if specified.
-                6. Professionalism: Maintain a professional tone and avoid personal opinions or subjective statements.
-                7. Output Format: Return the resume in a structured JSON format that can be easily converted into a PDF or Word document. The JSON should include sections, headings, and content for each section.
-                8. ATS Optimization: Ensure that the resume is optimized for Applicant Tracking Systems (ATS) by using standard headings and avoiding images or graphics that may not be parsed correctly.
+    const systemPrompt = `
+You are Alpha AI's elite Executive Resume Architect & ATS Optimization Specialist.
+Your task is to craft an exceptional, high-impact, ATS-compliant professional resume based on the user's details.
 
-            User's Input:
-                ${state.prompt}
-                
-                Please generate a resume based on the above information, following the guidelines provided. Return the resume in a structured format that can be easily converted into a PDF or Word document.
-            `
-
-        const response = await llm.invoke(systemPrompt)
-        const rawContent = Array.isArray(response.content)
-            ? response.content.map((part) => typeof part === "string" ? part : part?.text || "").join("")
-            : String(response.content ?? "");
-
-        const jsonText = rawContent
-            .replace(/```json/gi, "")
-            .replace(/```/g, "")
-            .replace(/^\s*[*-]\s*/gm, "")
-            .trim();
-
-        const data = JSON.parse(jsonText)
-        await deductCredits(state.userId, "resume")
-
-        const pdfBuffer = await generatePdf(data)
-        const fileName = `resume-${Date.now()}.pdf`
-        const uploaded = await uploadBuffer(pdfBuffer, {
-            public_id: fileName,
-            resource_type: "raw",
-            format: "pdf",
-        });
-
-        const downloadUrl = uploaded?.secure_url || "";
-
-        return {
-            ...state,
-            aiResponse: `✅ Resume generated successfully.
-                        ${data.title}
-                    [Download Resume](${downloadUrl}),
-                    Link Expired after 24 hours`,
-
-        };
-
-    } catch (error) {
-        console.error("PDF generation failed:", error?.response?.data || error?.message || error);
-
-        return {
-            ...state,
-            aiResponse: error?.data?.message || "❌ Failed to Generate Resume",
-        };
+Return ONLY valid JSON matching this exact structure:
+{
+  "title": "Candidate Name - Professional Title",
+  "subtitle": "email@example.com | +91 9876543210 | City, Country | LinkedIn | GitHub",
+  "sections": [
+    {
+      "heading": "Professional Summary",
+      "points": [
+        "Concise, metric-driven summary highlighting key strengths, years of experience, and core competencies."
+      ]
+    },
+    {
+      "heading": "Core Skills & Competencies",
+      "points": [
+        "Technical Skills: List key languages, frameworks, tools, and platforms relevant to the target role.",
+        "Methodologies & Domains: Agile, CI/CD, System Design, Cloud Architecture, Leadership."
+      ]
+    },
+    {
+      "heading": "Professional Experience",
+      "points": [
+        "Job Title | Company Name | Start Year - End Year / Present",
+        "• Spearheaded [Initiative/Project], driving a X% increase in performance/revenue using [Tech/Methodology].",
+        "• Architected and deployed scalable solutions that reduced downtime/latency by Y%.",
+        "• Collaborated across cross-functional engineering and product teams to deliver milestones on schedule."
+      ]
+    },
+    {
+      "heading": "Key Projects",
+      "points": [
+        "Project Name: Developed a full-stack solution featuring [Tech Stack], handling [scale/users] with high reliability.",
+        "Key Feature / Impact: Implemented real-time streaming, OAuth2 security, and automated CI/CD pipeline."
+      ]
+    },
+    {
+      "heading": "Education & Certifications",
+      "points": [
+        "Degree Name | Institution / University | Graduation Year",
+        "Relevant Certifications: AWS Certified / Google Cloud Professional / Meta Certified."
+      ]
     }
+  ]
 }
+
+STRICT GUIDELINES:
+1. ATS Optimization: Use standard section headings ("Professional Summary", "Core Skills & Competencies", "Professional Experience", "Key Projects", "Education & Certifications").
+2. Action Verbs & Metrics: Start accomplishment points with strong action verbs (Engineered, Architected, Spearheaded, Accelerated). Quantify impact where appropriate.
+3. Structure Consistency: Every section MUST have a "heading" string and a "points" array of strings.
+4. Output Integrity: Do not include markdown code fences, asterisks, backticks, or any conversational text outside the JSON object.
+
+User Information / Requirements:
+${state.prompt}
+`;
+
+    const response = await llm.invoke(systemPrompt);
+    const rawContent = Array.isArray(response?.content)
+      ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+      : String(response?.content ?? "");
+
+    const jsonText = rawContent
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .replace(/^\s*[*-]\s*/gm, "")
+      .trim();
+
+    const jsonStart = jsonText.indexOf("{");
+    const jsonEnd = jsonText.lastIndexOf("}");
+    const cleanJsonText = jsonStart >= 0 && jsonEnd > jsonStart ? jsonText.slice(jsonStart, jsonEnd + 1) : jsonText;
+
+    let data;
+    try {
+      data = JSON.parse(cleanJsonText);
+    } catch (parseError) {
+      // Safe fallback structure if model output had a slight JSON formatting flaw
+      data = {
+        title: "Professional Resume",
+        subtitle: "Generated by Alpha AI",
+        sections: [
+          {
+            heading: "Profile Overview",
+            points: [state.prompt.slice(0, 300)]
+          }
+        ]
+      };
+    }
+
+    if (!data?.title || !Array.isArray(data?.sections)) {
+      throw new Error("Invalid resume payload structure");
+    }
+
+    await deductCredits(state.userId, "resume");
+
+    const pdfBuffer = await generatePdf(data);
+    const fileName = `resume-${Date.now()}.pdf`;
+    const uploaded = await uploadBuffer(pdfBuffer, {
+      public_id: fileName,
+      resource_type: "raw",
+      format: "pdf",
+    });
+
+    const downloadUrl = uploaded?.secure_url || "";
+
+    return {
+      ...state,
+      aiResponse: `✅ **Resume generated successfully.**\n\n📄 **${data.title}**\n\n🔗 [Download Resume (PDF)](${downloadUrl})\n\n*(Download link valid for 24 hours)*`,
+    };
+  } catch (error) {
+    console.error("Resume generation failed:", error?.response?.data || error?.message || error);
+    return {
+      ...state,
+      aiResponse: error?.data?.message || error?.message || "❌ Failed to Generate Resume. Please try again.",
+    };
+  }
+};

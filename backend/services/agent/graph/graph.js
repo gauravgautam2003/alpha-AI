@@ -41,20 +41,20 @@ workflow.addConditionalEdges("router", (state) => {
             return "pdf"
         case "ppt":
             return "ppt"
-        case "imageGen":
+        case "image":
             return "imageGen"
         case "pdfRag":
             return "pdfRag"
         case "imageAnalyzer":
             return "imageAnalyzer"
         case "resume":
+        case "resumeBuilder":
             return "resume"    
         default:
             return "chat"
     }
 }, {
     //map agents
-
     chat: "chat",
     search: "search",
     coding: "coding",

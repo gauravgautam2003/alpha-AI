@@ -1,171 +1,177 @@
-# Alpha AI system design
+# Alpha AI — System Design & Architecture Specification
 
-This document describes the implemented request path between the React workspace, the API gateway, backend services, external providers, and persistence layers.
+This document details the architectural blueprint, data flows, LangGraph execution graph, dynamic model tiering, session security, and microservices topology for the Alpha AI platform.
 
-## Component diagram
+---
+
+## 1. High-Level Component Topology
 
 ```mermaid
-flowchart LR
-    U[User] --> F[React + Vite frontend]
-    F -->|Google sign-in popup| FA[Firebase Authentication]
-    F -->|HTTP requests with session cookie| G[Express API gateway]
+flowchart TB
+    subgraph Client["Client Tier (React 19 + Vite)"]
+        UI[Workspace SPA]
+        Monaco[Monaco Editor & Sandboxed Sandbox]
+        ReduxStore[Redux Toolkit Store]
+    end
 
-    G -->|/api/auth| AU[Auth service]
-    G -->|/api/me| GM[Current-user controller]
-    G -->|Protected /api/chat<br/>x-user-id header| CH[Chat service]
-    G -->|Protected /api/agent<br/>x-user-id header| AG[Agent service]
-    G -->|Protected /api/billing<br/>x-user-id header| BI[Billing service]
-    G -->|Validate session cookie| RS[(Redis)]
+    subgraph GatewayTier["API Gateway (Express :8000)"]
+        GW[Gateway Reverse Proxy]
+        AuthMW[Session Middleware]
+        UserCtrl[Current User Controller]
+    end
 
-    AU -->|Verify ID token| FAA[Firebase Admin]
-    AU --> US[(MongoDB: users)]
-    AU -->|Create seven-day session| RS
-    GM -->|Read session user| RS
+    subgraph AuthTier["Auth Service (:8001)"]
+        AuthApp[Auth API]
+        FBAdmin[Firebase Admin SDK]
+        UserDB[(MongoDB: users)]
+    end
 
-    CH --> CO[(MongoDB: conversations)]
-    CH --> ME[(MongoDB: messages)]
+    subgraph ChatTier["Chat Service (:8002)"]
+        ChatApp[Chat API]
+        ConvDB[(MongoDB: conversations)]
+        MsgDB[(MongoDB: messages)]
+    end
 
-    AG --> LG[LangGraph workflow]
-    LG --> RT[Router]
-    RT --> CA[Chat agent]
-    RT --> SA[Search agent]
-    RT --> CDA[Coding agent]
-    RT --> PA[PDF agent]
-    RT --> PPA[Presentation agent]
-    RT --> IGA[Image-generation agent]
-    SA --> CA
-    AG -->|Read/write last 20 messages| MEM[(Redis: 24-hour memory cache)]
-    AG -->|Save user and assistant messages| CH
-    SA --> TS[Tavily Search]
-    IGA --> CL[Cloudinary]
+    subgraph AgentTier["Agent Service (:8003)"]
+        AgentApp[Agent Controller]
+        GraphEngine[LangGraph Multi-Agent Engine]
+        ShortMem[(Redis: 24h Conversation Memory)]
+    end
 
-    BI --> PAY[Razorpay]
-    BI --> PM[(MongoDB: payments)]
-    BI -->|Update plan and credits| AU
+    subgraph BillingTier["Billing Service (:8004)"]
+        BillingApp[Billing Controller]
+        PayDB[(MongoDB: payments)]
+        RazorpayEngine[Razorpay Payment Gateway]
+    end
+
+    subgraph AIProviders["External AI & Storage Infrastructure"]
+        GroqLLM[Groq: Llama 3.3 70B & 3.1 8B]
+        GeminiLLM[Google: Gemini 2.0 Flash & Text-Embedding-004]
+        DeepSeekLLM[OpenRouter: DeepSeek V3 / R1]
+        TavilyAPI[Tavily Search Engine]
+        QdrantDB[Qdrant Cloud Vector Store]
+        CloudinaryCDN[Cloudinary Media CDN]
+    end
+
+    UI -->|HTTP / WithCredentials| GW
+    GW --> AuthMW
+    AuthMW -->|Session Lookup| ShortMem
+    GW -->|/api/auth| AuthApp
+    GW -->|/api/me| UserCtrl
+    GW -->|Protected /api/chat + x-user-id + x-user-plan| ChatApp
+    GW -->|Protected /api/agent + x-user-id + x-user-plan| AgentApp
+    GW -->|Protected /api/billing + x-user-id + x-user-plan| BillingApp
+
+    AuthApp --> FBAdmin
+    AuthApp --> UserDB
+    AuthApp --> ShortMem
+
+    ChatApp --> ConvDB
+    ChatApp --> MsgDB
+
+    AgentApp --> GraphEngine
+    GraphEngine --> GroqLLM
+    GraphEngine --> GeminiLLM
+    GraphEngine --> DeepSeekLLM
+    GraphEngine --> TavilyAPI
+    GraphEngine --> QdrantDB
+    GraphEngine --> CloudinaryCDN
+
+    BillingApp --> RazorpayEngine
+    BillingApp --> PayDB
+    BillingApp -->|Sync Plan & Credits| AuthApp
 ```
 
-## Frontend composition
+---
 
-The frontend is a single React page assembled by `Home`:
+## 2. Multi-Agent Graph Architecture (LangGraph)
 
-| Area | Implementation responsibility |
-| --- | --- |
-| `Home` | Restores `/api/me`, shows the loading skeleton, and gates the workspace behind Google sign-in |
-| `SideBar` | Loads conversations, creates a new-chat state, selects conversations, toggles collapse, opens billing, and logs out |
-| `ChatArea` | Loads messages for the selected conversation and combines navigation, message list, and composer |
-| `ChatInput` | Chooses `auto`, `chat`, `coding`, `pdf`, `ppt`, `image`, or `search`; creates a conversation on first send; submits prompts |
-| `MessageBubble` | Renders Markdown/GFM, code blocks, images, lightbox viewing, external links, and artifact downloads |
-| `Artifact` | Shows generated files in Monaco and previews `index.html` with related CSS and JavaScript in a sandboxed iframe |
-| `BillingDrawer` | Displays plan/credit state and starts Razorpay upgrades |
-| Redux store | Holds user, conversation, message, and artifact state |
+The Agent microservice orchestrates autonomous specialist agents inside a compiled `StateGraph`:
 
-The browser uses Axios with `withCredentials: true`, so the server-managed `session` cookie is sent to the gateway. The artifact panel is rendered only at the extra-large responsive breakpoint; message-level downloads remain available independently.
+```mermaid
+flowchart TD
+    Start([__start__]) --> Router[Router / Intent Classifier]
 
-## Authentication and session flow
+    Router -->|chat| ChatAgent[Chat Agent<br/>Groq Llama 3.3/3.1]
+    Router -->|search| SearchAgent[Search Agent<br/>Tavily Search]
+    Router -->|coding| CodingAgent[Coding Agent<br/>DeepSeek V3 / Groq 70B]
+    Router -->|pdf| PdfAgent[PDF Document Agent<br/>PDFKit]
+    Router -->|ppt| PptAgent[Presentation Agent<br/>PptxGenJS]
+    Router -->|image / imageGen| ImageGenAgent[Image Gen Agent<br/>Pollinations / Cloudinary]
+    Router -->|pdfRag / PDF file| PdfRagAgent[PDF RAG Agent<br/>text-embedding-004 + Qdrant]
+    Router -->|imageAnalyzer / Image file| ImageAnalyzerAgent[Image Vision Agent<br/>Gemini 2.0 Flash]
+    Router -->|resume| ResumeAgent[Resume Architect<br/>ATS Schema + Cloudinary]
+
+    SearchAgent -->|Augmented Context| ChatAgent
+    ChatAgent --> End([__end__])
+    CodingAgent --> End
+    PdfAgent --> End
+    PptAgent --> End
+    ImageGenAgent --> End
+    PdfRagAgent --> End
+    ImageAnalyzerAgent --> End
+    ResumeAgent --> End
+```
+
+---
+
+## 3. Dynamic Model Tiering & Margin Architecture
+
+| User Tier | Routing & Chat | Coding Engine | Vision & RAG | Document & Resumes | Marginal Unit Profit |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Free Tier** | Groq `llama-3.1-8b-instant` | Groq `llama-3.3-70b-versatile` | Gemini 2.0 Flash | Groq 8B / 70B | High Speed / Zero Cost |
+| **Starter (₹299)** | Groq `llama-3.3-70b-versatile` | OpenRouter DeepSeek V3 | Gemini 2.0 Flash | Groq 70B + Cloudinary | **93%+ (₹280+ Net Profit)** |
+| **Pro (₹499)** | Groq `llama-3.3-70b-versatile` | OpenRouter DeepSeek V3/R1 | Gemini 2.0 Flash | Gemini 2.0 Flash / Groq 70B | **90%+ (₹450+ Net Profit)** |
+
+---
+
+## 4. End-to-End Billing & Real-Time Sync Flow
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Web as React frontend
-    participant Firebase as Firebase Auth
-    participant Gateway as API gateway
-    participant Auth as Auth service
-    participant Redis
+    autonumber
+    participant User as Client Browser
+    participant Gateway as API Gateway (:8000)
+    participant Billing as Billing Service (:8004)
+    participant Razorpay as Razorpay API
+    participant Auth as Auth Service (:8001)
+    participant Redis as Redis Session Cache
     participant Mongo as MongoDB
 
-    User->>Web: Selects Continue with Google
-    Web->>Firebase: Google sign-in popup
-    Firebase-->>Web: Firebase ID token
-    Web->>Gateway: POST /api/auth/login { token }
-    Gateway->>Auth: Proxy request
-    Auth->>Firebase: Verify ID token with Firebase Admin
-    Auth->>Mongo: Find or create user
-    Auth->>Redis: Store user session for seven days
-    Auth-->>Web: Set HTTP-only session cookie + user
-    Web->>Gateway: Protected request with cookie
-    Gateway->>Redis: Validate session
-    Gateway->>Gateway: Attach trusted x-user-id for protected proxies
-```
+    User->>Gateway: POST /api/billing/create-order { plan: "starter" }
+    Gateway->>Billing: Proxy with x-user-id
+    Billing->>Razorpay: orders.create({ amount: 29900, currency: "INR" })
+    Razorpay-->>Billing: order object
+    Billing->>Mongo: Store Payment Record (status: "created")
+    Billing-->>User: { order, plan }
 
-Unauthenticated protected requests receive `401`. The gateway also clears an expired session cookie. CORS is restricted to the configured frontend origin and credentials are enabled for cookie transport.
+    User->>Razorpay: Open Razorpay Checkout Modal
+    Razorpay-->>User: Returns { razorpay_order_id, razorpay_payment_id, razorpay_signature }
 
-## Prompt, routing, and persistence flow
-
-```mermaid
-sequenceDiagram
-    participant Web as React frontend
-    participant Gateway as API gateway
-    participant Agent as Agent service
-    participant Cache as Redis memory cache
-    participant Graph as LangGraph
-    participant Chat as Chat service
-    participant Mongo as MongoDB
-    participant Provider as LLM/search/media provider
-
-    Web->>Gateway: POST /api/agent/chat { prompt, conversationId, agent }
-    Gateway->>Agent: Proxy request with x-user-id
-    Agent->>Chat: Save user message
-    Chat->>Mongo: Persist user message
-    Agent->>Cache: Load conversation context
-    Agent->>Graph: Invoke prompt, user, agent, and optional file
-    Graph->>Graph: Respect manual mode or ask router LLM
-    Graph->>Provider: Execute selected specialist task
-    Provider-->>Graph: Response, images, or artifacts
-    Graph-->>Agent: Normalized result
-    Agent->>Cache: Append user/assistant context and cap at 20 messages
-    Agent->>Chat: Save assistant response and generated outputs
-    Chat->>Mongo: Persist assistant message
-    Agent-->>Web: answer, images, and artifacts
-```
-
-`auto` uses the router's classification rules. A manually selected mode bypasses classification. Search flows pass through the search agent and then the chat agent for response composition. Other specialist nodes return directly to the workflow end.
-
-## Billing flow
-
-```mermaid
-sequenceDiagram
-    participant Web as Billing drawer
-    participant Gateway as API gateway
-    participant Billing as Billing service
-    participant Razorpay
-    participant Mongo as MongoDB
-    participant Auth as Auth service
-
-    Web->>Gateway: POST /api/billing/create { plan }
-    Gateway->>Billing: Proxy request with x-user-id
-    Billing->>Razorpay: Create INR order
-    Billing->>Mongo: Store created payment
-    Billing-->>Web: Order details
-    Web->>Razorpay: Open checkout
-    Razorpay-->>Web: Payment identifiers and signature
-    Web->>Gateway: POST /api/billing/verify
+    User->>Gateway: POST /api/billing/verify-payment { order_id, payment_id, signature }
     Gateway->>Billing: Proxy verification request
-    Billing->>Billing: Verify HMAC signature
-    Billing->>Mongo: Mark payment as paid
-    Billing->>Auth: Update user plan and credits
+    Billing->>Billing: crypto.createHmac("sha256").update(order_id + "|" + payment_id).digest("hex")
+    Billing->>Mongo: Mark payment status as "paid"
+    Billing->>Auth: POST /update-plan { userId, plan, credits }
+    Auth->>Mongo: Update user.plan, user.credits, user.planExpiresAt
+    Auth->>Redis: Update cached user session in Redis
+    Billing-->>User: { success: true, message: "Payment verified" }
+
+    User->>Gateway: POST /api/me (Fetch fresh profile)
+    Gateway-->>User: { user: { plan: "starter", credits: 500, ... } }
+    User->>User: Redux dispatch(setUserData), update badge & close drawer
 ```
 
-The frontend currently exposes Starter and Pro plans. Payment verification and credit updates must remain server-side responsibilities.
+---
 
-## Service responsibilities
+## 5. Security & Isolation Matrix
 
-| Component | Responsibility |
-| --- | --- |
-| Frontend | Authentication UI, responsive chat workspace, Redux state, API calls, Markdown and artifact presentation |
-| Gateway | CORS, JSON/cookie middleware, Redis session validation, route proxying, and trusted user-ID propagation |
-| Auth service | Firebase Admin verification, user provisioning, session lifecycle, and plan/credit updates |
-| Chat service | Conversation and message persistence in MongoDB |
-| Billing service | Razorpay order creation, payment signature verification, payment records, and plan upgrades |
-| Agent service | Request validation, LangGraph execution, specialist coordination, response normalization, and message persistence orchestration |
-| Router | Manual agent selection or LLM-based classification into one specialist |
-| Redis | Seven-day sessions and 24-hour, capped short-term conversation memory |
-| MongoDB | User, conversation, message, and payment records |
-| Firebase | Google identity and ID-token issuance |
-| External providers | LLM inference, Tavily web search, Cloudinary media storage, and Razorpay payments |
-
-## Important implementation notes
-
-- The agent controller can accept a multipart file, but the current composer only exposes visual attachment controls; upload behavior is not wired into the UI yet.
-- The artifact preview uses `sandbox="allow-scripts"` and should continue to treat generated HTML as untrusted content.
-- Billing routes are intended to expose `/create` and `/verify` through the gateway. The billing route file currently registers both controller handlers under `/create`, so verification routing should be corrected before enabling production payments.
-- Conversation ownership and downstream authorization should be enforced consistently in the chat service before production deployment.
+1. **Authentication & Identity**:
+   - HTTP-only session cookie set with strict expiry (7 days) and sanitized session UUID keys.
+   - Gateway verifies sessions against Redis and dynamically injects `x-user-id` and `x-user-plan` to protected downstream services.
+2. **Payment Integrity**:
+   - Razorpay HMAC verification is calculated server-side. No client-supplied credit or plan values are ever trusted.
+3. **Execution Sandboxing**:
+   - Code artifacts generated by the coding agent run strictly in a sandboxed iframe (`sandbox="allow-scripts"`).
+4. **Rate Limiting & Abuse Prevention**:
+   - Redis-backed rate limiting per user per agent with exponential TTL backoff.

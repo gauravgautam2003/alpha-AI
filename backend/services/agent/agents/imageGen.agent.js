@@ -1,5 +1,5 @@
 import axios from "axios";
-import cloudinary, { uploadBuffer } from "../config/cloudinary.js";
+import  { uploadBuffer } from "../config/cloudinary.js";
 import { deductCredits } from "../utils/deductCredits.js";
 import { checkAgentLimit } from "../config/agentLimit.js";
 

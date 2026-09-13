@@ -1,69 +1,71 @@
-import { getModel } from "../config/llmModels.js"
-import { HumanMessage, SystemMessage } from "@langchain/core/messages"
-import { deductCredits } from "../utils/deductCredits.js"
-import { checkAgentLimit } from "../config/agentLimit.js"
+import { getModel } from "../config/llmModels.js";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { deductCredits } from "../utils/deductCredits.js";
+import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const imageAnalyzerAgent = async (state) => {
     try {
-        await checkAgentLimit(state.userId, "image")
+        await checkAgentLimit(state.userId, "imageAnalyzer");
 
-        const llm = await getModel("imageAnalyzer")
+        const llm = await getModel("imageAnalyzer", state.plan);
         if (!state.file?.buffer || !state.file.mimetype?.startsWith("image/")) {
             return {
                 ...state,
-                aiResponse: "Please upload a valid image before asking for image analysis."
-            }
+                aiResponse: "⚠️ Please upload a valid image file (PNG, JPG, WEBP) for visual analysis."
+            };
         }
 
         const imageBuffer = Buffer.isBuffer(state.file.buffer)
             ? state.file.buffer
-            : Buffer.from(state.file.buffer)
-        const base64Image = imageBuffer.toString("base64")
+            : Buffer.from(state.file.buffer);
+        const base64Image = imageBuffer.toString("base64");
 
         const messages = [
             new SystemMessage(
-                `You are Alpha AI's visual analysis specialist.
+                `You are Alpha AI's Principal Computer Vision & Multimodal Intelligence Specialist.
 
-                Analyze only the uploaded image and answer the user's question directly.
-                Rules:
-                    - Describe visible content accurately and distinguish observation from inference.
-                    - Extract readable text faithfully; preserve important labels, numbers, and layout.
-                    - Explain charts, tables, diagrams, objects, and relationships when relevant.
-                    - Mention uncertainty when the image is blurry, cropped, ambiguous, or unreadable.
-                    - Never invent details that are not visible in the image.
-                    - Do not identify a person, location, or sensitive attribute unless the image and request support a careful, non-speculative answer.
-                    - Prioritize the user's requested aspect instead of describing every visible object.
-                    - Use concise Markdown with headings or bullets when it improves clarity.
-                    `
+Your capabilities:
+1. High-Precision OCR: Extract all printed or handwritten text with 100% precision, preserving formatting, tables, and numerical data.
+2. Technical & UI Analysis: Inspect UI designs, flowcharts, architecture diagrams, error screenshots, and code snippets in images.
+3. Data Visualization & Charts: Interpret bar charts, line graphs, scatter plots, and infographics with statistical rigor.
+4. Problem Solving: If the image contains a math problem, bug, code error, or test question, provide a step-by-step verified solution.
+
+Formatting Rules:
+- Present insights cleanly with Markdown headings, bullet points, and code fences.
+- If part of the image is illegible or occluded, state the ambiguity transparently without guessing.`
             ),
             new HumanMessage({
                 content: [
                     {
                         type: "text",
-                        text: state.prompt || "analyze the image"
+                        text: state.prompt || "Please analyze this image thoroughly and provide detailed insights."
                     },
                     {
                         type: "image_url",
-                        "image_url": {
+                        image_url: {
                             url: `data:${state.file.mimetype};base64,${base64Image}`
                         }
                     }
                 ]
             })
-        ]
+        ];
 
-        const response = await llm.invoke(messages)
-        await deductCredits(state.userId, "image")
+        const response = await llm.invoke(messages);
+        const textContent = Array.isArray(response?.content)
+            ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+            : String(response?.content ?? "");
+
+        await deductCredits(state.userId, "imageAnalyzer");
+
         return {
             ...state,
-            aiResponse: response.content
-        }
-
+            aiResponse: textContent
+        };
     } catch (error) {
-        console.log(error.message || error)
+        console.error("Image Analyzer Error:", error?.message || error);
         return {
             ...state,
-            aiResponse: error?.data?.message || "Failed to analyze file"
-        }
+            aiResponse: error?.data?.message || error?.message || "❌ Failed to analyze image. Please try again."
+        };
     }
-}
+};

@@ -1,0 +1,13 @@
+{
+  "name": "alpha-ai-tests",
+  "version": "1.0.0",
+  "description": "Test suite for Alpha AI backend",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "test:billing": "node --test tests/billing.test.js",
+    "test:agent": "node --test tests/agent.test.js",
+    "test:auth": "node --test tests/auth.test.js",
+    "test:all": "node --test --reporter=spec tests/billing.test.js tests/agent.test.js tests/auth.test.js"
+  }
+}

@@ -3,6 +3,7 @@ export const PLANS = {
         id: "free",
         name: "Free",
         amount: 0,
+        credits: 100,
         validity: 30
     },
     starter : {

@@ -6,8 +6,8 @@ import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const pptAgent = async (state) => {
     try {
-        await checkAgentLimit(state.userId, "ppt")
-        const llm = await getModel("ppt");
+        await checkAgentLimit(state.userId, "ppt");
+        const llm = await getModel("ppt", state.plan);
         const response = await llm.invoke(`
         You are a senior presentation strategist and visual storytelling designer.
         Create a polished, audience-focused slide deck with a clear narrative and presentation-ready wording.

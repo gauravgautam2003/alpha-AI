@@ -2,6 +2,7 @@ import redis from "../../../shared/redis/redis.js";
 import { getMessages } from "../utils/getMessages.js";
 
 export const getMemory = async (conversationId, userId) => {
+    if (!conversationId) return [];
     const key = `messages:${conversationId}`;
     try {
         const cached = await redis.get(key);
@@ -23,6 +24,7 @@ export const getMemory = async (conversationId, userId) => {
 }
 
 export const addMessage = async (conversationId, role, content) => {
+    if (!conversationId) return;
     const key = `messages:${conversationId}`;
     try {
         const rawMessages = await redis.get(key);

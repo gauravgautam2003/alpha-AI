@@ -49,8 +49,8 @@ export const createOrder = async (req, res) => {
             plan: selectedPlan
         })
     } catch (error) {
-        return req.status(500).json({
-            message: `Create order failed: ${error}`,
+        return res.status(500).json({
+            message: `Create order failed: ${error?.message || error}`,
             success: false,
         })
     }
@@ -62,7 +62,7 @@ export const verifyPayment = async (req, res) => {
 
         const generateSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(`${razorpay_order_id} | ${razorpay_payment_id}`)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
             .digest("hex")
 
         if (generateSignature !== razorpay_signature) {
@@ -93,12 +93,14 @@ export const verifyPayment = async (req, res) => {
 
         return res.status(200).json({
             message: "Payment verified",
-            success: true
+            success: true,
+            plan: payment.plan,
+            credits: payment.credits
         })
     } catch (error) {
         return res.status(500).json({
-            message: `verify payment error ${error.message}`,
-            success: true
+            message: `verify payment error ${error?.message || error}`,
+            success: false
         })
     }
 }

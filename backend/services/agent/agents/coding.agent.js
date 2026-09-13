@@ -4,121 +4,137 @@ import { deductCredits } from "../utils/deductCredits.js";
 
 export const codingAgent = async (state) => {
     try {
+        await checkAgentLimit(state.userId, "coding");
 
-        const intentLLM = await getModel("intent");
-        await checkAgentLimit(state.userId, "coding")
-
-        const llm = await getModel("coding");
+        const intentLLM = await getModel("intent", state.plan);
+        const llm = await getModel("coding", state.plan);
 
         // -----------------------------
         // 1. INTENT CLASSIFICATION
         // -----------------------------
         const intentRes = await intentLLM.invoke(`
-You are an intent classifier for a coding agent.
+You are an intent classifier for a senior software engineering assistant.
+Analyze the user's request and classify it into exactly ONE of these categories:
+- CODE_GENERATION (User wants a complete app, website, widget, script, component, or full multi-file solution)
+- CODE_REVIEW (User wants code analyzed for bugs, security, best practices)
+- DEBUGGING (User wants help fixing an error, crash, stack trace, or bug)
+- OPTIMIZATION (User wants performance, memory, or architectural optimization)
+- CONVERSION (User wants code translated from one language/framework to another)
+- DOCUMENTATION (User wants README, API docs, or code explanations)
 
-Return exactly one value:
-     CODE_GENERATION, 
-     CODE_REVIEW,
-     DEBUGGING, 
-     OPTIMIZATION,
-     CONVERSION, 
-     DOCUMENTATION.
-
-No extra text.
+Return ONLY the classification keyword in uppercase. No punctuation or markdown.
 
 User request:
 ${state.prompt}
 `);
 
-        const intent = intentRes.content.trim();
+        const rawIntent = Array.isArray(intentRes?.content)
+            ? intentRes.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+            : String(intentRes?.content ?? "");
+
+        const intentUpper = rawIntent.trim().toUpperCase();
+        const isCodeGeneration =
+            intentUpper.includes("CODE_GENERATION") ||
+            /(build|create|generate|make|develop|write|code)\s+(a|an|the|me)?\s*(app|website|page|game|clone|component|ui|dashboard|system|script|tool)/i.test(
+                state.prompt
+            );
 
         // -----------------------------
-        // 2. CODE GENERATION
+        // 2. FULL PROJECT CODE GENERATION
         // -----------------------------
-        if (intent === "CODE_GENERATION") {
+        if (isCodeGeneration) {
             const prompt = `
-You are a senior software engineer responsible for producing correct, maintainable, secure code.
-Build the smallest complete solution that satisfies the request. Follow the requested stack and existing conventions; if no stack is specified, use simple HTML, CSS, and JavaScript.
+You are Alpha AI's Principal Full-Stack Software Engineer.
+Build a complete, production-grade, highly polished, working software solution based on the user's request.
 
-Implementation rules:
-- Solve the root problem with the smallest maintainable design.
-- Keep imports, APIs, state flow, and file references internally consistent.
-- Make forms, buttons, loading states, errors, and responsive layouts functional.
-- Avoid unnecessary dependencies, fake data, placeholder behavior, broken imports, and secrets.
-- Prefer accessible semantic HTML and clear naming.
-- Preserve existing public APIs unless the request requires a breaking change.
-- Validate input at boundaries and handle expected failure states.
-- Do not claim that code was executed, tested, or deployed unless that actually happened.
-- Return valid JSON only in this format:
+CRITICAL IMPLEMENTATION RULES:
+- Design: Modern, responsive, stunning visual aesthetics with sleek typography, smooth animations, and zero broken assets.
+- Completeness: All HTML, CSS, and JS must be completely written out. Never write "// TODO" or "// Add logic here".
+- Resilience: Validate inputs, handle loading and error states, and prevent edge-case failures.
+- Output Format: You MUST output STRICT VALID JSON matching this exact structure:
 {
   "files": [
-        { 
-            "name": "index.html",
-            "content": "..."
-        },
-        { 
-            "name": "style.css",
-            "content": "..."
-        },
-        { 
-            "name": "script.js",
-            "content": "..."
-        }
-    ]
+    { 
+      "name": "index.html",
+      "content": "<!DOCTYPE html>..."
+    },
+    { 
+      "name": "style.css",
+      "content": "/* complete modern styles */..."
+    },
+    { 
+      "name": "script.js",
+      "content": "// complete interactive logic..."
+    }
+  ]
 }
-No markdown, no code fences, and no extra text outside the JSON object.
 
-User request:
+STRICT INSTRUCTION: Return ONLY the JSON object. Do not wrap in conversational text.
+
+User Request:
 ${state.prompt}
 `;
 
             const response = await llm.invoke(prompt);
+            const rawContent = Array.isArray(response?.content)
+                ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+                : String(response?.content ?? "");
+
+            const cleanText = rawContent
+                .replace(/```json/gi, "")
+                .replace(/```/g, "")
+                .trim();
+
+            const jsonStart = cleanText.indexOf("{");
+            const jsonEnd = cleanText.lastIndexOf("}");
+            const candidateJson = jsonStart >= 0 && jsonEnd > jsonStart ? cleanText.slice(jsonStart, jsonEnd + 1) : cleanText;
 
             let data;
-
             try {
-                data = JSON.parse(response.content);
-                await deductCredits(state.userId, "coding")
+                data = JSON.parse(candidateJson);
+                await deductCredits(state.userId, "coding");
 
-            } catch (error) {
-                console.error("Invalid JSON returned by coding model:", error);
-
-                return {
-                    ...state,
-                    aiResponse: "Failed to generate valid project code.",
-                    artifacts: []
-                };
+                if (Array.isArray(data?.files) && data.files.length > 0) {
+                    return {
+                        ...state,
+                        aiResponse: "✨ **Project code generated successfully.** Explore and run the generated files in your project workspace.",
+                        artifacts: [
+                            {
+                                id: Date.now(),
+                                type: "Project",
+                                files: data.files,
+                                title: state.prompt.slice(0, 50)
+                            }
+                        ]
+                    };
+                }
+            } catch (jsonErr) {
+                console.warn("Project JSON extraction fallback to direct markdown response");
             }
-
-            return {
-                ...state,
-                aiResponse: "Code Generated Successfully.",
-                artifacts: [
-                    {
-                        id: Date.now(),
-                        type: "Project",
-                        files: data.files || [],
-                        title: state.prompt
-                    }
-                ]
-            };
         }
 
         // -----------------------------
-        // 3. OTHER CODING INTENTS
+        // 3. CODE REVIEW, DEBUGGING & EXPLANATION
         // -----------------------------
         const response = await llm.invoke(`
-You are a senior software engineer performing a careful code change.
-The request is classified as: ${intent}.
+You are Alpha AI's Senior Software Engineer & Code Architect.
+Your task is to provide an in-depth, production-grade technical solution.
 
-Solve the root cause, preserve existing behavior outside the requested scope, and provide a practical maintainable solution. Check edge cases and security implications. Do not invent APIs, credentials, test results, or files. Return concise Markdown with: diagnosis, solution, implementation, and verification steps when useful.
+Guidelines:
+1. Root Cause Analysis: Clearly identify underlying issues, inefficiencies, or edge cases.
+2. Production Code: Provide clean, idiomatic, fully working code blocks with proper syntax highlighting.
+3. Security & Scalability: Adhere to OWASP security guidelines, error handling, and optimal complexity.
+4. Step-by-Step Explanation: Walk through why this solution works and how to verify it.
 
-User request:
+User Request:
 ${state.prompt}
 `);
 
-        const data = response.content;
-        await deductCredits(state.userId, "coding")
+        const data = Array.isArray(response?.content)
+            ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+            : String(response?.content ?? "");
+
+        await deductCredits(state.userId, "coding");
 
         return {
             ...state,
@@ -126,9 +142,10 @@ ${state.prompt}
             artifacts: []
         };
     } catch (error) {
+        console.error("Coding agent error:", error?.message || error);
         return {
             ...state,
-            aiResponse: error?.data?.message || "coding agent error",
+            aiResponse: error?.data?.message || error?.message || "❌ Coding agent encountered an error. Please try again.",
             artifacts: []
         };
     }

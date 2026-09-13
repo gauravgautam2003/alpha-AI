@@ -353,7 +353,12 @@ export const deductCredits = async (req, res) => {
             coding: 10,
             pdf: 10,
             ppt: 10,
-            image: 10
+            image: 10,
+            imageGen: 10,
+            imageAnalyzer: 10,
+            pdfRag: 10,
+            resume: 10,
+            resumeBuilder: 10
         };
 
         const user = await User.findById(userId)

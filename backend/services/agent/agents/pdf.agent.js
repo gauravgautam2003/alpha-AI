@@ -6,41 +6,36 @@ import { checkAgentLimit } from "../config/agentLimit.js";
 
 export const pdfAgent = async (state) => {
     try {
-        await checkAgentLimit(state.userId, "pdf")
-        const llm = await getModel("pdf");
+        await checkAgentLimit(state.userId, "pdf");
+        const llm = await getModel("pdf", state.plan);
         const response = await llm.invoke(`
-You are a professional document architect creating a polished PDF-ready document.
-Turn the user's request into accurate, useful content for the intended audience and purpose.
-Return only valid JSON. No markdown, code fences, explanations, asterisks, or extra text.
+You are Alpha AI's Senior Executive Document Architect.
+Generate a structured, professional, publication-ready PDF document from the user's request.
 
-Required JSON structure:
+Return ONLY valid JSON matching this schema:
 {
-  "title": "Document title",
-  "subtitle": "Short subtitle",
+  "title": "Clear Document Title",
+  "subtitle": "Brief subtitle or executive tagline",
   "sections": [
-    { "heading": "Section title", "points": ["Point 1", "Point 2"] }
+    { 
+      "heading": "Section Heading", 
+      "points": ["Clear, informative, well-articulated point 1", "Detailed point 2", "Key insight 3"] 
+    }
   ]
 }
 
 Rules:
-- Infer the document type, audience, tone, and desired depth from the request.
-- Use a logical narrative: title, concise subtitle, overview, sections, and conclusion.
-- Make every section specific and useful; avoid filler and repetition.
-- Add tables, comparisons, examples, references, or action items only when they improve the document.
-- Never invent sources, statistics, quotations, or claims presented as facts.
-- Keep headings short and points readable in a PDF layout.
-- Use consistent terminology and a professional tone.
-- Put the most important information first and make each point understandable without extra context.
-- If the request lacks key details, make a reasonable neutral assumption rather than adding fictional specifics.
-- Ensure the response is strict parseable JSON matching the schema exactly.
+- Organize with logical progression: Executive Summary, Key Findings, In-depth Analysis, Recommendations, Next Steps.
+- Keep every point actionable, professional, and directly relevant.
+- Do NOT output markdown code fences, notes, or text outside the JSON object.
 
 User request:
 ${state.prompt}
 `);
 
-        const rawContent = Array.isArray(response.content)
-            ? response.content.map((part) => typeof part === "string" ? part : part?.text || "").join("")
-            : String(response.content ?? "");
+        const rawContent = Array.isArray(response?.content)
+            ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+            : String(response?.content ?? "");
 
         const jsonText = rawContent
             .replace(/```json/gi, "")
@@ -48,12 +43,25 @@ ${state.prompt}
             .replace(/^\s*[*-]\s*/gm, "")
             .trim();
 
+        const jsonStart = jsonText.indexOf("{");
+        const jsonEnd = jsonText.lastIndexOf("}");
+        const cleanJsonText = jsonStart >= 0 && jsonEnd > jsonStart ? jsonText.slice(jsonStart, jsonEnd + 1) : jsonText;
 
-        const data = JSON.parse(jsonText)
-        await deductCredits(state.userId, "pdf")
+        let data;
+        try {
+            data = JSON.parse(cleanJsonText);
+        } catch (parseErr) {
+            data = {
+                title: "Generated Document",
+                subtitle: "Alpha AI Export",
+                sections: [{ heading: "Overview", points: [state.prompt] }]
+            };
+        }
 
-        const pdfBuffer = await generatePdf(data)
-        const fileName = `pdf-${Date.now()}.pdf`
+        await deductCredits(state.userId, "pdf");
+
+        const pdfBuffer = await generatePdf(data);
+        const fileName = `pdf-${Date.now()}.pdf`;
         const uploaded = await uploadBuffer(pdfBuffer, {
             public_id: fileName,
             resource_type: "raw",
@@ -64,11 +72,7 @@ ${state.prompt}
 
         return {
             ...state,
-            aiResponse: `✅ PDF generated successfully.
-                        ${data.title}
-                    [Download PDF](${downloadUrl}),
-                    Link Expired after 24 hours`,
-
+            aiResponse: `✅ **PDF generated successfully.**\n\n📄 **${data.title}**\n\n🔗 [Download PDF Document](${downloadUrl})\n\n*(Download link valid for 24 hours)*`,
         };
 
     } catch (error) {

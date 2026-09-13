@@ -6,77 +6,94 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { deductCredits } from "../utils/deductCredits.js";
 import { checkAgentLimit } from "../config/agentLimit.js";
 
+const extractPdfText = async (pdfBuffer) => {
+    try {
+        if (PDFParse) {
+            const parser = new PDFParse({ data: pdfBuffer });
+            const result = await parser.getText();
+            return result?.text || "";
+        }
+        return "";
+    } catch (err) {
+        console.error("PDF Parse error:", err);
+        return "";
+    }
+};
+
 export const pdfRagAgent = async (state) => {
     try {
-        await checkAgentLimit(state.userId, "pdf")
+        await checkAgentLimit(state.userId, "pdfRag");
         if (!state.file?.buffer || state.file.mimetype !== "application/pdf") {
             return {
                 ...state,
-                aiResponse: "Please upload a valid PDF before asking questions about it."
-            }
+                aiResponse: "⚠️ Please upload a valid PDF document to ask questions about its content."
+            };
         }
 
         const pdfBuffer = Buffer.isBuffer(state.file.buffer)
             ? state.file.buffer
-            : Buffer.from(state.file.buffer)
-        const pdf = new PDFParse({ data: pdfBuffer })
+            : Buffer.from(state.file.buffer);
 
-        const result = await pdf.getText()
-        const text = result.text
+        const text = await extractPdfText(pdfBuffer);
 
         if (!text?.trim()) {
             return {
                 ...state,
-                aiResponse: "I couldn't extract readable text from this PDF."
-            }
+                aiResponse: "⚠️ Could not extract readable text from this PDF. It may be password-protected or contain only scanned images without selectable text."
+            };
         }
 
         const splitter = new RecursiveCharacterTextSplitter({
             chunkSize: 1000,
-            chunkOverlap: 200
-        })
+            chunkOverlap: 150
+        });
 
-        const docs = await splitter.createDocuments([text])
-        const collectionName = `pdf-${Date.now()}`
-        const store = await vectorStore(docs, collectionName)
+        const docs = await splitter.createDocuments([text]);
+        const collectionName = `pdf-${state.userId ? String(state.userId).slice(-8) : "session"}-${Date.now()}`;
+        const store = await vectorStore(docs, collectionName);
 
-        const relevantDocs = await store.similaritySearch(state.prompt || "Summarize this PDF", 5)
-        const context = relevantDocs.map(data => data.pageContent).join("\n\n")
+        const relevantDocs = await store.similaritySearch(state.prompt || "Summarize the key takeaways of this PDF", 6);
+        const context = relevantDocs.map((data) => data.pageContent).join("\n\n---\n\n");
 
-        const llm = await getModel("pdfRag")
+        const llm = await getModel("pdfRag", state.plan);
 
         const messages = [
             new SystemMessage(`
-                You are Alpha AI's document question-answering specialist.
+You are Alpha AI's Principal Document Intelligence & Research Specialist.
 
-                Answer the user's question only from the retrieved content of the uploaded PDF.
-                Rules:
-                    - Treat the PDF context as the only source of truth.
-                    - Do not use outside knowledge to fill missing details.
-                    - If the answer is not supported by the context, say exactly: "I couldn't find this information in the uploaded PDF."
-                    - Explain the answer clearly and cite page numbers only when page information is present in the context.
-                    - Use concise Markdown and preserve important numbers, names, dates, and qualifications.
-                    - Prefer direct answers over a generic summary.
-                    - If the context is incomplete or contradictory, say so and identify the limitation.
-                    - Never imply that a citation or page reference exists when it is absent.
-            `),
+Your task is to answer user queries grounded strictly in the provided PDF document context.
 
+Core Principles:
+1. Absolute Grounding: Rely strictly on the provided PDF context. Do not speculate or invent facts.
+2. Handling Missing Info: If the requested information is absent from the context, state: "I couldn't find information regarding this in the uploaded PDF."
+3. Structure & Clarity: Present clear, well-structured answers using Markdown bullet points, headings, and tables where applicable.
+4. Precision: Preserve technical names, numerical figures, dates, and quantitative data verbatim.
+`),
             new HumanMessage(`
-                Context: ${context}
-                Question: ${state.prompt}
-            `)
-        ]
+PDF Context:
+${context}
 
-        const response = await llm.invoke(messages)
-        await deductCredits(state.userId, "pdf")
+User Question:
+${state.prompt || "Summarize this document"}
+`)
+        ];
+
+        const response = await llm.invoke(messages);
+        const textContent = Array.isArray(response?.content)
+            ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
+            : String(response?.content ?? "");
+
+        await deductCredits(state.userId, "pdfRag");
+
         return {
             ...state,
-            aiResponse: response.content
-        }
+            aiResponse: textContent
+        };
     } catch (error) {
+        console.error("PDF RAG Error:", error?.message || error);
         return {
             ...state,
-            aiResponse: error?.data?.message || "Failed to Analyze pdf"
-        }
+            aiResponse: error?.data?.message || error?.message || "❌ Failed to analyze PDF. Please try again."
+        };
     }
-}
+};

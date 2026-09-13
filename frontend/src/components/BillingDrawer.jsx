@@ -1,20 +1,22 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { LuCrown, LuX } from 'react-icons/lu'
-import { useSelector } from 'react-redux'
+import { LuCrown, LuX, LuCheck } from 'react-icons/lu'
+import { useDispatch, useSelector } from 'react-redux'
 import { createOrder } from '../features/createOrder'
-import { verifyPayment } from '../features/verifyPayment,js'
+import { verifyPayment } from '../features/verifyPayment'
+import getCurrentUser from '../features/getCurrentUser'
+import { setUserData } from '../redux/userSlice'
 import { useState } from 'react'
 
-
-
 const BillingDrawer = ({ open, onClose }) => {
-
+    const dispatch = useDispatch()
     const { userData } = useSelector(state => state.user)
     const [billingError, setBillingError] = useState("")
+    const [billingSuccess, setBillingSuccess] = useState("")
     const [processingPlan, setProcessingPlan] = useState("")
 
     const handleUpgrade = async (plan) => {
         setBillingError("")
+        setBillingSuccess("")
         setProcessingPlan(plan)
         try {
             const data = await createOrder(plan)
@@ -30,21 +32,33 @@ const BillingDrawer = ({ open, onClose }) => {
                 amount: data.order.amount,
                 currency: data.order.currency,
                 name: "Alpha AI",
-                description: `${data.plan.name} Plan`,
-                orderId: data.order.id,
+                description: `${data.plan.name} Plan Upgrade`,
+                order_id: data.order.id,
                 handler: async (response) => {
                     try {
-                        await verifyPayment({
+                        const result = await verifyPayment({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature
                         })
+
+                        if (result?.success) {
+                            setBillingSuccess(`🎉 Successfully upgraded to ${data.plan.name} plan!`)
+                            const freshUser = await getCurrentUser()
+                            if (freshUser?.user) {
+                                dispatch(setUserData(freshUser.user))
+                            }
+                            setTimeout(() => {
+                                onClose()
+                                setBillingSuccess("")
+                            }, 2000)
+                        }
                     } catch (error) {
                         setBillingError(error.response?.data?.message || "Payment verification failed. Please contact support.")
                     }
                 },
                 theme: {
-                    color: "#4F46E5"
+                    color: "#3B82F6"
                 }
             }
 
@@ -122,6 +136,7 @@ const BillingDrawer = ({ open, onClose }) => {
                         </div>
 
                         {billingError && <p role='alert' className='mx-5 rounded-lg border border-red-300/20 bg-red-400/10 px-3 py-2 text-xs text-red-200'>{billingError}</p>}
+                        {billingSuccess && <p role='status' className='mx-5 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300 font-medium flex items-center gap-1.5'><LuCheck className='text-emerald-400 text-sm shrink-0' />{billingSuccess}</p>}
 
                         <div className='px-5 flex-1 overflow-auto space-y-4'>
                             <div className='rounded-xl border border-white/10 p-4'>

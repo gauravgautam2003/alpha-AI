@@ -12,8 +12,8 @@ import { checkAgentLimit } from "../config/agentLimit.js";
 export const chatAgent = async (state) => {
     try {
 
-        await checkAgentLimit(state.userId, "chat")
-        const llm = await getModel("chat");
+        await checkAgentLimit(state.userId, "chat");
+        const llm = await getModel("chat", state.plan);
 
         const history = await getMemory(
             state.conversationId,

@@ -7,7 +7,7 @@ export const agent = async (req, res, next) => {
         const { prompt, conversationId, agent } = req.body;
         const file = req.file
         const userId = req.headers["x-user-id"];
-
+        const plan = req.headers["x-user-plan"] || "free";
 
         if (conversationId) {
             await axios.post(`${process.env.CHAT_SERVICE}/save-message`, {
@@ -22,6 +22,7 @@ export const agent = async (req, res, next) => {
             conversationId,
             agent,
             userId,
+            plan,
             file: req.file ? {
                 originalname: req.file.originalname,
                 mimetype: req.file.mimetype,

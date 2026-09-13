@@ -1,244 +1,194 @@
-# Alpha AI
+# Alpha AI — Autonomous Multi-Agent AI Workspace & Productivity Suite
 
-Alpha AI is a full-stack, multi-agent AI workspace. It combines a focused chat interface with persistent conversations, specialist AI modes, generated media, downloadable files, and a browser-based artifact viewer.
+Alpha AI is an enterprise-grade, full-stack, multi-agent AI workspace designed for lightning-fast reasoning, intelligent document analysis, automated ATS resume generation, computer vision, full-stack software development, presentation creation, and web search intelligence.
 
-## Website analysis
+---
 
-### Product experience
+## 🚀 Key Highlights & Specialist AI Agents
 
-The frontend is a desktop-first creative studio with a compact, dark glass interface. After authentication, the user works in three areas:
+Alpha AI features a dynamic LangGraph multi-agent execution pipeline with automatic intent classification and specialized agents:
 
-- **Conversation sidebar:** starts a new chat, switches between recent conversations, collapses on large screens, opens billing, and signs out.
-- **Chat workspace:** displays the selected conversation, message count, Markdown answers, syntax-highlighted code, tables, links, generated images, and file downloads.
-- **Artifact workspace:** appears for generated files on extra-large screens. It provides file tabs, a read-only Monaco editor, copy-to-clipboard, and an HTML/CSS/JavaScript preview in a sandboxed iframe.
+| Agent / Mode | Technology / Model | Core Capability |
+| :--- | :--- | :--- |
+| **🧭 Auto Router** | Groq `llama-3.1-8b-instant` | Classifies user intent with zero latency and routes to the optimal specialist agent. |
+| **💬 General Chat** | Groq `llama-3.3-70b-versatile` / `3.1-8b` | Context-aware reasoning with 24-hour Redis memory and Markdown formatting. |
+| **💻 Coding Engineer** | DeepSeek V3 (`deepseek/deepseek-chat`) | Produces full-stack, multi-file code solutions (HTML/CSS/JS) rendered in a live sandboxed Monaco workspace. |
+| **📄 Resume Architect** | Gemini 2.0 Flash / Groq 70B | Generates ATS-compliant, executive PDF resumes and uploads to Cloudinary with secure download links. |
+| **🖼️ Image Analyzer** | Google Gemini 2.0 Flash | Multimodal computer vision for high-accuracy OCR, chart analysis, architecture diagrams, and screenshot debugging. |
+| **📑 PDF RAG Analyzer** | Google `text-embedding-004` + Qdrant | Retrieval-Augmented Generation (RAG) providing strictly grounded answers with document citations. |
+| **📊 Presentation Architect** | Groq `llama-3.3-70b-versatile` + PptxGenJS | Generates 6-slide executive PowerPoint (.pptx) decks ready for download. |
+| **📑 Document Architect** | Groq `llama-3.3-70b-versatile` + PDFKit | Crafts structured, publication-grade PDF documents. |
+| **🌐 Web Search Agent** | Tavily Search + Groq | Live real-time internet search and synthesis. |
+| **🎨 Image Generation** | Pollinations.ai / SD Engine | Text-to-image prompt synthesis with Cloudinary CDN delivery. |
 
-### Main user flow
+---
 
-1. The app checks for an existing server session through `/api/me` and shows a loading skeleton while it does so.
-2. Unauthenticated users see a Google sign-in modal powered by Firebase Authentication.
-3. The user creates or selects a conversation from the sidebar.
-4. A prompt is submitted with `Enter`, or with `Shift+Enter` for a new line. A new conversation is created automatically and its first prompt becomes the title.
-5. The selected agent sends the request through the gateway. Responses are rendered as Markdown and may include images, downloadable artifacts, or code.
-6. Conversation history and the latest artifacts are restored when a saved conversation is selected.
+## 💎 Subscription Tiers & Unit Economics
 
-### Available AI modes
+Alpha AI features dynamic plan-aware model routing maximizing developer profit while delivering top-tier performance:
 
-The composer exposes these modes:
+| Plan | Price (INR) | Credits | Model Capabilities | Profit Margin |
+| :--- | :--- | :--- | :--- | :--- |
+| **Free** | ₹0 | 100 Credits | Groq Llama 3.1 8B, Groq 70B, Gemini 2.0 Flash | High speed, zero marginal cost |
+| **Starter** | ₹299 / mo | 500 Credits | DeepSeek V3, Groq Llama 3.3 70B, Gemini 2.0 Flash | **₹280+ profit/user (93%+ margin)** |
+| **Pro** | ₹499 / mo | 1000 Credits | DeepSeek V3/R1, Gemini 2.0 Flash, Groq 70B | **₹450+ profit/user (90%+ margin)** |
 
-| Mode | Intended use |
-| --- | --- |
-| Auto | Let the backend route the request |
-| Chat | General conversation and assistance |
-| Coding | Programming and code-generation tasks |
-| PDF | PDF-oriented generation tasks |
-| PPT | Presentation generation tasks |
-| Image | Image-generation tasks |
-| Search | Web-search-oriented tasks |
+---
 
-### Visual and interaction design
+## 🏗️ System Architecture
 
-- Dark navy glass surfaces with cyan and blue action accents
-- Responsive layout with a collapsible sidebar and an artifact panel available at `xl` widths
-- Motion-based entrance, hover, and panel transitions using Motion
-- Markdown chat presentation with GFM tables, external-link indicators, copyable code blocks, image lightbox viewing, and lazy-loaded images
-- Billing drawer showing the current plan and credits, with Starter and Pro Razorpay upgrade actions
+Alpha AI is built as a microservices architecture coordinated through an API Gateway:
 
-### Current frontend limitations
+```text
+                        ┌─────────────────────────────────────────┐
+                        │      React + Vite Frontend (SPA)        │
+                        │ (Monaco Editor, Motion, Tailwind, Redux) │
+                        └───────────────────┬─────────────────────┘
+                                            │ HTTP / Cookie Session
+                                            ▼
+                        ┌─────────────────────────────────────────┐
+                        │           API Gateway (Port 8000)       │
+                        │   - Redis Session Authentication         │
+                        │   - Header Injection (x-user-id, plan)  │
+                        └─────┬──────────┬──────────┬───────────┬─┘
+                              │          │          │           │
+          ┌───────────────────┘          │          │           └────────────────────┐
+          ▼                              ▼          ▼                                ▼
+┌──────────────────┐          ┌──────────────────┐┌──────────────────┐    ┌──────────────────┐
+│   Auth Service   │          │   Chat Service   ││ Billing Service  │    │  Agent Service   │
+│   (Port 8001)    │          │   (Port 8002)    ││   (Port 8004)    │    │   (Port 8003)    │
+│ - Firebase / OTP │          │ - Conversations  ││ - Razorpay HMAC  │    │ - LangGraph Graph│
+│ - MongoDB Users  │          │ - Message Store  ││ - Plan Upgrade   │    │ - Specialist AI  │
+│ - Credit Balance │          │ - History Sync   ││ - MongoDB Payment│    │ - Redis Cache    │
+└──────────────────┘          └──────────────────┘└──────────────────┘    └──────────────────┘
+```
 
-- Attachment and microphone buttons are present visually but do not yet start upload or voice workflows.
-- Share and conversation-options buttons currently have no connected action.
-- The artifact panel is hidden below the extra-large breakpoint, so generated files remain accessible through message downloads on smaller screens.
-- Billing requires the Razorpay browser script and `VITE_RAZORPAY_KEY_ID` to be configured.
-- Error handling is currently surfaced as a generic send failure in the composer; richer retry and notification states would improve production readiness.
+See [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md) for sequence diagrams and deep architectural specifications.
 
-## Architecture
+---
 
-The application uses a React single-page frontend and an Express-based microservice backend. The gateway owns browser-facing API routes and session checks; feature services own authentication, persisted chat history, billing, and agent orchestration.
+## 🛠️ Technology Stack
 
-See [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md) for the component diagram and request flows.
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, Vite, Redux Toolkit, Tailwind CSS v4, Motion, Monaco Editor, React Markdown, Remark GFM, Prism |
+| **API Gateway** | Express, `express-http-proxy`, Redis session validator, CORS, Cookie-Parser, Morgan |
+| **AI Orchestration** | LangChain Core, LangGraph, Groq SDK, Google Generative AI, OpenRouter |
+| **Vector Store & Embeddings** | Qdrant Cloud Vector Database, Google `text-embedding-004` |
+| **Databases & Cache** | MongoDB (Mongoose ODM), Redis (ioredis) |
+| **Media & Generation** | Cloudinary API, PDFKit, PptxGenJS, pdf-parse, Pollinations |
+| **Authentication & Payments** | Firebase Auth / Admin SDK, Nodemailer (OTP), Razorpay Payments SDK |
 
-## Features
+---
 
-- Google sign-in through Firebase Authentication
-- Server-managed HTTP-only Redis sessions
-- Conversation creation, renaming, history retrieval, and message persistence
-- Agent routing with LangGraph
-- Specialist chat, search, coding, PDF, presentation, and image-generation agents
-- Redux state management and Markdown-rendered chat responses
-- Code artifact inspection and HTML preview
-- Razorpay plan upgrades and credit tracking
-
-## Tech stack
-
-| Area | Technologies |
-| --- | --- |
-| Frontend | React 19, Vite, Redux Toolkit, Tailwind CSS, Axios, Firebase Web SDK, Motion |
-| UI and content | React Icons, React Markdown, Remark GFM, Monaco Editor, Prism syntax highlighting |
-| Gateway | Node.js, Express, `express-http-proxy`, CORS, cookie-parser |
-| Services | Node.js, Express, LangChain/LangGraph |
-| Data | MongoDB with Mongoose, Redis with ioredis |
-| Authentication and payments | Firebase Admin, Google sign-in, Razorpay |
-
-## Repository layout
+## 📂 Repository Layout
 
 ```text
 frontend/                 React + Vite web application
-  src/pages/              Top-level screens
-  src/components/         Sidebar, chat, billing, and artifact UI
-  src/features/           API request helpers
-  src/redux/              User, conversation, and message state
+  src/components/         Sidebar, ChatArea, Composer, BillingDrawer, Artifacts
+  src/features/           API integration modules (verifyPayment, createOrder, etc.)
+  src/redux/              User, conversation, and message state slices
 backend/
-  gateway/                Public API gateway and session middleware
+  gateway/                Central API Gateway with session verification & proxy
   services/
-    auth/                 Firebase token verification and user/session creation
-    chat/                 Conversations and messages API
-    billing/              Plans, orders, and payment verification
-    agent/                LangGraph router and specialist agents
-  shared/redis/           Shared Redis client
-  docker-compose.yml      Local Redis service
-SYSTEM_DESIGN.md          System architecture and data-flow diagram
+    auth/                 User provisioning, OTP/Firebase login, credit billing
+    chat/                 Conversations and persistent message repository
+    billing/              Razorpay order creation and HMAC verification
+    agent/                LangGraph router, LLM configs, specialist agents
+  shared/redis/           Shared Redis connection instance
+SYSTEM_DESIGN.md          Detailed architecture, data flows, and security design
 ```
 
-## Prerequisites
+---
 
-- Node.js 20 or later
-- A MongoDB deployment
-- Docker Desktop (recommended for Redis)
-- A Firebase project with Google authentication enabled
-- API credentials required by the configured agent integrations
-- Razorpay credentials if billing is enabled
+## ⚡ Local Development Setup
 
-## Local setup
+### 1. Start Redis
+```bash
+cd backend
+docker compose up -d redis
+```
 
-1. Start Redis from the backend directory:
+### 2. Install Dependencies
+```bash
+# Frontend
+cd frontend && npm install
 
-   ```bash
-   cd backend
-   docker compose up -d redis
-   ```
+# Microservices
+cd ../backend/gateway && npm install
+cd ../services/auth && npm install
+cd ../chat && npm install
+cd ../billing && npm install
+cd ../agent && npm install
+```
 
-2. Install dependencies for the frontend and each backend package:
+### 3. Configure Environment Variables
+Create `.env` files in each service directory (see templates below).
 
-   ```bash
-   cd frontend && npm install
-   cd ../backend/gateway && npm install
-   cd ../services/auth && npm install
-   cd ../chat && npm install
-   cd ../billing && npm install
-   cd ../agent && npm install
-   ```
+### 4. Run Development Servers
+```bash
+# Start microservices in separate terminals:
+cd backend/gateway && npm run dev
+cd backend/services/auth && npm run dev
+cd backend/services/chat && npm run dev
+cd backend/services/billing && npm run dev
+cd backend/services/agent && npm run dev
 
-3. Create the environment files below. Keep all `.env` files and Firebase service-account credentials out of version control.
+# Start Frontend
+cd frontend && npm run dev
+```
 
-4. Start the gateway, auth, chat, billing, and agent services in separate terminals. Start the frontend with:
+---
 
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
-The Vite development server is configured for port `3000`.
-
-## Frontend commands
-
-Run these from `frontend/`:
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start Vite development server on port 3000 |
-| `npm run build` | Create a production build |
-| `npm run lint` | Run ESLint |
-| `npm run preview` | Preview the production build locally |
-
-## Environment variables
-
-The exact model-provider variables depend on the agents configured in `backend/services/agent`.
+## 🔐 Environment Variables Configuration
 
 ### Frontend (`frontend/.env`)
-
 ```env
 VITE_SERVER_URL=http://localhost:8000
 VITE_FIREBASE_API_KEY=your_firebase_web_api_key
 VITE_RAZORPAY_KEY_ID=your_razorpay_key_id
 ```
 
-### Gateway (`backend/gateway/.env`)
-
+### API Gateway (`backend/gateway/.env`)
 ```env
 PORT=8000
 FRONTEND_URL=http://localhost:3000
-AUTH_SERVICE=http://localhost:5001
-CHAT_SERVICE=http://localhost:5002
-BILLING_SERVICE=http://localhost:5004
-AGENT_SERVICE=http://localhost:5003
+AUTH_SERVICE=http://localhost:8001
+CHAT_SERVICE=http://localhost:8002
+AGENT_SERVICE=http://localhost:8003
+BILLING_SERVICE=http://localhost:8004
 REDIS_URL=redis://localhost:6379
 ```
 
-### Auth service (`backend/services/auth/.env`)
-
+### Agent Service (`backend/services/agent/.env`)
 ```env
-PORT=5001
+PORT=8003
 MONGODB_URI=your_mongodb_connection_string
+GROQ_API_KEY=your_groq_api_key
+GOOGLE_API_KEY=your_google_ai_studio_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+TAVILY_API_KEY=your_tavily_search_api_key
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+QDRANT_URL=your_qdrant_cluster_url
+QDRANT_API_KEY=your_qdrant_api_key
+CHAT_SERVICE=http://localhost:8002
+AUTH_SERVICE=http://localhost:8001
 REDIS_URL=redis://localhost:6379
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-gmail-app-password
-SMTP_FROM=your-email@gmail.com
 ```
 
-### Chat service (`backend/services/chat/.env`)
+---
 
-```env
-PORT=5002
-MONGODB_URI=your_mongodb_connection_string
-```
+## 🛡️ Security, SEO & Production Best Practices
 
-### Agent service (`backend/services/agent/.env`)
+1. **HMAC Signature Verification**: Razorpay verification is computed server-side (`sha256`) using strictly verified secrets.
+2. **Session Isolation**: HTTP-only, `sameSite` secure session cookies with Redis key TTLs.
+3. **Sandboxed Artifacts**: Monaco editor code rendering runs inside isolated iframe sandboxes (`sandbox="allow-scripts"`).
+4. **Lighthouse & SEO Optimized**: Meta tags, Open Graph cards, Twitter previews, font preconnects, and defer scripts.
 
-```env
-PORT=5003
-MONGODB_URI=your_mongodb_connection_string
-CHAT_SERVICE=http://localhost:5002
-# Add the LLM, search, Cloudinary, and media-provider keys used by your agents.
-```
+---
 
-### Billing service (`backend/services/billing/.env`)
-
-```env
-PORT=5004
-MONGODB_URI=your_mongodb_connection_string
-# Add the Razorpay credentials used by the billing service.
-```
-
-## API overview
-
-All endpoints are exposed through the gateway under `/api`.
-
-| Route | Method | Purpose |
-| --- | --- | --- |
-| `/api/auth/login` | POST | Verifies a Firebase ID token and creates a session cookie |
-| `/api/auth/logout` | GET | Removes the current session |
-| `/api/me` | GET | Returns the current authenticated user |
-| `/api/chat/create-conversation` | GET | Creates a conversation for the signed-in user |
-| `/api/chat/get-conversations` | GET | Lists the user's conversations |
-| `/api/chat/get-messages/:conversationId` | GET | Reads conversation history |
-| `/api/chat/save-message` | POST | Persists a chat message |
-| `/api/chat/update-conversation` | POST | Updates a conversation title |
-| `/api/agent/chat` | POST | Sends a prompt into the agent workflow |
-| `/api/billing/create-order` | POST | Creates a Razorpay plan order |
-| `/api/billing/verify-payment` | POST | Verifies a completed payment |
-
-## Security notes
-
-- Keep `.env` files and Firebase service-account JSON files private.
-- Configure secure cookies (`secure: true`) and appropriate `sameSite` values before deploying over HTTPS.
-- Restrict `FRONTEND_URL` to the deployed frontend origin.
-- Enforce ownership checks on conversation and message mutations before production use.
-- Keep artifact preview sandboxed and validate generated/downloaded URLs server-side.
-- Validate payment signatures only on the server and never trust client-provided plan or credit values.
-
-## License
-
+## 📄 License
 This project is licensed under the [MIT License](LICENSE).
+

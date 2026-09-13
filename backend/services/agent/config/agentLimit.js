@@ -2,12 +2,16 @@ import redis from "../../../shared/redis/redis.js"
 
 const Limits = {
     chat: 20,
-    coding: 5,
-    pdf: 5,
-    ppt: 5,
-    image: 5,
-    search: 5,
-    resume: 5
+    coding: 10,
+    pdf: 10,
+    ppt: 10,
+    image: 10,
+    imageGen: 10,
+    imageAnalyzer: 10,
+    pdfRag: 10,
+    search: 15,
+    resume: 10,
+    resumeBuilder: 10
 }
 
 export const checkAgentLimit = async (userId, agent) => {
