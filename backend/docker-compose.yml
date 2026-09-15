@@ -3,6 +3,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   auth:
     build:
@@ -13,8 +20,11 @@ services:
     environment:
       PORT: 8001
       REDIS_URL: redis://redis:6379
+    ports:
+      - "8001:8001"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   chat:
     build:
@@ -25,8 +35,11 @@ services:
     environment:
       PORT: 8002
       REDIS_URL: redis://redis:6379
+    ports:
+      - "8002:8002"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   agent:
     build:
@@ -35,10 +48,14 @@ services:
     env_file:
       - ./services/agent/.env
     environment:
+      AUTH_SERVICE: http://auth:8001
       PORT: 8003
       REDIS_URL: redis://redis:6379
+    ports:
+      - "8003:8003"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   billing:
     build:
@@ -47,10 +64,14 @@ services:
     env_file:
       - ./services/billing/.env
     environment:
+      AUTH_SERVICE: http://auth:8001
       PORT: 8004
       REDIS_URL: redis://redis:6379
+    ports:
+      - "8004:8004"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
 
   gateway:
     build:
@@ -69,7 +90,11 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - auth
-      - chat
-      - agent
-      - billing
+      auth:
+        condition: service_started
+      chat:
+        condition: service_started
+      agent:
+        condition: service_started
+      billing:
+        condition: service_started
