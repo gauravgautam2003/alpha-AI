@@ -17,6 +17,7 @@ import AppSkeleton from '../skeletons/AppSkeleton';
 import { requestOtp } from '../features/requestOtp';
 import { verifyOtp } from '../features/verifyOtp';
 import { closeAuth, setAuthMode } from '../redux/uiSlice';
+import normalizeUser from '../utils/normalizeUser';
 
 
 const Home = () => {
@@ -34,7 +35,7 @@ const Home = () => {
     const handleLogin = useCallback(async (token) => {
         try {
             const { data } = await api.post("/api/auth/login", { token });
-            dispatch(setUserData(data));
+            dispatch(setUserData(normalizeUser(data)));
         } catch (error) {
             console.log("login error", error);
         }
@@ -44,8 +45,9 @@ const Home = () => {
         const checkAuth = async () => {
             try {
                 const { data } = await api.get("/api/me");
-                if (data && (data._id || data.user)) {
-                    dispatch(setUserData(data));
+                const currentUser = normalizeUser(data);
+                if (currentUser?._id) {
+                    dispatch(setUserData(currentUser));
                 }
             } catch (error) {
                 console.log("No active session", error);
@@ -105,7 +107,7 @@ const Home = () => {
         setIsSubmitting(true);
         try {
             const data = await verifyOtp(verificationEmail, otp);
-            dispatch(setUserData(data));
+            dispatch(setUserData(normalizeUser(data)));
             dispatch(closeAuth());
             setVerificationSent(false);
             setOtp("");

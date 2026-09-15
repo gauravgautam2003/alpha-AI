@@ -6,6 +6,7 @@ import { verifyPayment } from '../features/verifyPayment'
 import getCurrentUser from '../features/getCurrentUser'
 import { setUserData } from '../redux/userSlice'
 import { useState } from 'react'
+import normalizeUser from '../utils/normalizeUser'
 
 const BillingDrawer = ({ open, onClose }) => {
     const dispatch = useDispatch()
@@ -45,8 +46,9 @@ const BillingDrawer = ({ open, onClose }) => {
                         if (result?.success) {
                             setBillingSuccess(`🎉 Successfully upgraded to ${data.plan.name} plan!`)
                             const freshUser = await getCurrentUser()
-                            if (freshUser?.user) {
-                                dispatch(setUserData(freshUser.user))
+                            const currentUser = normalizeUser(freshUser)
+                            if (currentUser?._id) {
+                                dispatch(setUserData(currentUser))
                             }
                             setTimeout(() => {
                                 onClose()

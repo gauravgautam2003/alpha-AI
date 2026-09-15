@@ -1,5 +1,75 @@
 services:
+
   redis:
-    image: redis
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  auth:
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    env_file:
+      - ./services/auth/.env
+    environment:
+      PORT: 8001
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  chat:
+    build:
+      context: .
+      dockerfile: services/chat/Dockerfile
+    env_file:
+      - ./services/chat/.env
+    environment:
+      PORT: 8002
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  agent:
+    build:
+      context: .
+      dockerfile: services/agent/Dockerfile
+    env_file:
+      - ./services/agent/.env
+    environment:
+      PORT: 8003
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  billing:
+    build:
+      context: .
+      dockerfile: services/billing/Dockerfile
+    env_file:
+      - ./services/billing/.env
+    environment:
+      PORT: 8004
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    env_file:
+      - ./gateway/.env
+    environment:
+      PORT: 8000
+      AUTH_SERVICE: http://auth:8001
+      CHAT_SERVICE: http://chat:8002
+      AGENT_SERVICE: http://agent:8003
+      BILLING_SERVICE: http://billing:8004
+      FRONTEND_URL: http://localhost:4000
+      REDIS_URL: redis://redis:6379
     ports:
-      - 6379:6379
+      - "8000:8000"
+    depends_on:
+      - auth
+      - chat
+      - agent
+      - billing
