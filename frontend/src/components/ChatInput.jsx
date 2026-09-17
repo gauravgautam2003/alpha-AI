@@ -303,26 +303,6 @@ function ChatInput() {
     return (
         <div className='w-full overflow-hidden px-3 md:px-6 pb-5 pt-2 shrink-0'>
             <div className='mirror-surface max-w-5xl mx-auto flex flex-col gap-3 rounded-3xl px-4 pt-3.5 pb-3'>
-                {(selectedAgent === "Coding" || selectedAgent === "Auto") && (
-                    <div className='flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-500'>
-                        <LuFolderOpen size={15} className='shrink-0 text-sky-600' />
-                        <input
-                            type='text'
-                            value={workspacePath}
-                            onChange={(event) => {
-                                const nextPath = event.target.value;
-                                setWorkspacePath(nextPath);
-                                localStorage.setItem("alpha-workspace-path", nextPath);
-                            }}
-                            placeholder='Select a VS Code workspace to give the coding agent context'
-                            aria-label='VS Code workspace path'
-                            className='min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-400'
-                        />
-                        <button type='button' onClick={pickWorkspace} disabled={isPickingWorkspace} className='shrink-0 rounded-lg border border-sky-200/70 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60'>
-                            {isPickingWorkspace ? 'Opening…' : 'Select folder'}
-                        </button>
-                    </div>
-                )}
 
                 <div className='flex gap-2 flex-wrap pr-3'>
                     {agents.map((agent) => {
@@ -413,7 +393,17 @@ function ChatInput() {
                                     className='w-0.5 origin-bottom rounded-full bg-red-400 transition-[height] duration-75'
                                 />
                             ))}
-                        </div>}
+
+                        </div>
+
+                        }
+                        {(selectedAgent === "Coding" || selectedAgent === "Auto") && (
+                            <div className='flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-500'>
+                                <button type='button' onClick={pickWorkspace} disabled={isPickingWorkspace} className='shrink-0 rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-bold text-gray-200 hover:text-gray-300 transition-colors disabled:cursor-not-allowed disabled:opacity-50'>
+                                    {isPickingWorkspace ? 'Opening…' : 'Select folder'}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className='hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-slate-400'>
