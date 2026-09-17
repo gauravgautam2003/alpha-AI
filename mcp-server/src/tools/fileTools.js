@@ -572,5 +572,422 @@ export function registerFileTools(server) {
             }
         }
     );
+
+    // ==========================================
+    // 1. GET FILE INFO
+    // ==========================================
+
+    server.registerTool(
+        "get_file_info",
+        {
+            description: "Get metadata about a file or directory",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .describe("Workspace-relative file or directory path"),
+            },
+        },
+
+        async ({ path }) => {
+            try {
+                const filePath = resolveWorkspacePath(path);
+
+                const stats = await fs.stat(filePath);
+
+                const info = {
+                    path,
+                    type: stats.isDirectory()
+                        ? "directory"
+                        : "file",
+                    size: stats.size,
+                    createdAt: stats.birthtime,
+                    modifiedAt: stats.mtime,
+                };
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(
+                                info,
+                                null,
+                                2
+                            ),
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to get file info: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+
+    // ==========================================
+    // 2. REPLACE IN FILE
+    // ==========================================
+
+    server.registerTool(
+        "replace_in_file",
+        {
+            description: "Replace exact text inside a file",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
+
+                search: z
+                    .string()
+                    .describe("Exact text to find"),
+
+                replacement: z
+                    .string()
+                    .describe("Text to replace it with"),
+            },
+        },
+
+        async ({ path, search, replacement }) => {
+            try {
+                const filePath = resolveWorkspacePath(path);
+
+                const content = await fs.readFile(
+                    filePath,
+                    "utf-8"
+                );
+
+                if (!content.includes(search)) {
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: `Text not found in file: ${path}`,
+                            },
+                        ],
+                        isError: true,
+                    };
+                }
+
+                const updatedContent =
+                    content.replace(
+                        search,
+                        replacement
+                    );
+
+                await fs.writeFile(
+                    filePath,
+                    updatedContent,
+                    "utf-8"
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Text replaced successfully in: ${path}`,
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to replace text: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+
+    // ==========================================
+    // 3. READ DIRECTORY TREE
+    // ==========================================
+
+    server.registerTool(
+        "read_directory_tree",
+        {
+            description: "Read the directory structure recursively",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .default("")
+                    .describe("Workspace-relative directory path"),
+
+                maxDepth: z
+                    .number()
+                    .int()
+                    .min(0)
+                    .default(3)
+                    .describe("Maximum directory depth"),
+            },
+        },
+
+        async ({ path, maxDepth }) => {
+            try {
+                const rootPath =
+                    resolveWorkspacePath(path);
+
+                async function buildTree(
+                    currentPath,
+                    depth
+                ) {
+                    if (depth > maxDepth) {
+                        return [];
+                    }
+
+                    const entries =
+                        await fs.readdir(
+                            currentPath,
+                            {
+                                withFileTypes: true,
+                            }
+                        );
+
+                    const tree = [];
+
+                    for (const entry of entries) {
+
+                        if (
+                            entry.name === "node_modules" ||
+                            entry.name === ".git"
+                        ) {
+                            continue;
+                        }
+
+                        const fullPath =
+                            pathModule.join(
+                                currentPath,
+                                entry.name
+                            );
+
+                        const item = {
+                            name: entry.name,
+                            type: entry.isDirectory()
+                                ? "directory"
+                                : "file",
+                        };
+
+                        if (entry.isDirectory()) {
+                            item.children =
+                                await buildTree(
+                                    fullPath,
+                                    depth + 1
+                                );
+                        }
+
+                        tree.push(item);
+                    }
+
+                    return tree;
+                }
+
+                const tree =
+                    await buildTree(
+                        rootPath,
+                        0
+                    );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(
+                                tree,
+                                null,
+                                2
+                            ),
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to read directory tree: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+
+    // ==========================================
+    // 4. CREATE FILE
+    // ==========================================
+
+    server.registerTool(
+        "create_file",
+        {
+            description: "Create a new empty file",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
+            },
+        },
+
+        async ({ path }) => {
+            try {
+                const filePath =
+                    resolveWorkspacePath(path);
+
+                await fs.writeFile(
+                    filePath,
+                    "",
+                    {
+                        encoding: "utf-8",
+                        flag: "wx",
+                    }
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `File created successfully: ${path}`,
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to create file: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+
+    // ==========================================
+    // 5. APPEND TO FILE
+    // ==========================================
+
+    server.registerTool(
+        "append_to_file",
+        {
+            description: "Append text to an existing file",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
+
+                content: z
+                    .string()
+                    .describe("Text to append"),
+            },
+        },
+
+        async ({ path, content }) => {
+            try {
+                const filePath =
+                    resolveWorkspacePath(path);
+
+                await fs.appendFile(
+                    filePath,
+                    content,
+                    "utf-8"
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Content appended successfully: ${path}`,
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to append content: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
+
+
+    // ==========================================
+    // 6. CLEAR FILE
+    // ==========================================
+
+    server.registerTool(
+        "clear_file",
+        {
+            description: "Remove all content from a file",
+
+            inputSchema: {
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
+            },
+        },
+
+        async ({ path }) => {
+            try {
+                const filePath =
+                    resolveWorkspacePath(path);
+
+                await fs.writeFile(
+                    filePath,
+                    "",
+                    "utf-8"
+                );
+
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `File cleared successfully: ${path}`,
+                        },
+                    ],
+                };
+
+            } catch (error) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to clear file: ${error.message}`,
+                        },
+                    ],
+                    isError: true,
+                };
+            }
+        }
+    );
 }
 
