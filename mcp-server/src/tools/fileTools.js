@@ -248,6 +248,10 @@ export function registerFileTools(server) {
             try {
                 const directoryPath = resolveWorkspacePath(path);
 
+                if (directoryPath === resolveWorkspacePath("")) {
+                    throw new Error("Refusing to delete the workspace root");
+                }
+
                 await fs.rm(directoryPath, {
                     recursive: true,
                     force: true,
