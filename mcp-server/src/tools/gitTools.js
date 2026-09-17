@@ -7,11 +7,9 @@ const execFileAsync = promisify(execFile);
 
 
 async function runGit(args, cwd) {
-    const workingDirectory =
-        resolveWorkspacePath(cwd);
+    const workingDirectory = resolveWorkspacePath(cwd);
 
-    const { stdout, stderr } =
-        await execFileAsync(
+    const { stdout, stderr } = await execFileAsync(
             "git",
             args,
             {
@@ -51,8 +49,7 @@ export function registerGitTools(server) {
 
         async ({ path }) => {
             try {
-                const result =
-                    await runGit(
+                const result = await runGit(
                         ["status", "--short"],
                         path
                     );
@@ -71,8 +68,7 @@ export function registerGitTools(server) {
                     content: [
                         {
                             type: "text",
-                            text:
-                                `Git status failed: ${error.message}`,
+                            text: `Git status failed: ${error.message}`,
                         },
                     ],
                     isError: true,
@@ -102,8 +98,7 @@ export function registerGitTools(server) {
 
         async ({ path }) => {
             try {
-                const result =
-                    await runGit(
+                const result = await runGit(
                         ["diff"],
                         path
                     );
@@ -112,9 +107,7 @@ export function registerGitTools(server) {
                     content: [
                         {
                             type: "text",
-                            text:
-                                result.stdout ||
-                                "No changes found",
+                            text: result.stdout || "No changes found",
                         },
                     ],
                 };
@@ -124,8 +117,7 @@ export function registerGitTools(server) {
                     content: [
                         {
                             type: "text",
-                            text:
-                                `Git diff failed: ${error.message}`,
+                            text: `Git diff failed: ${error.message}`,
                         },
                     ],
                     isError: true,
@@ -163,9 +155,7 @@ export function registerGitTools(server) {
 
         async ({ path, limit }) => {
             try {
-                const result =
-                    await runGit(
-                        [
+                const result = await runGit([
                             "log",
                             `-${limit}`,
                             "--oneline",
@@ -177,9 +167,7 @@ export function registerGitTools(server) {
                     content: [
                         {
                             type: "text",
-                            text:
-                                result.stdout ||
-                                "No commits found",
+                            text: result.stdout || "No commits found",
                         },
                     ],
                 };
@@ -189,8 +177,7 @@ export function registerGitTools(server) {
                     content: [
                         {
                             type: "text",
-                            text:
-                                `Git log failed: ${error.message}`,
+                            text: `Git log failed: ${error.message}`,
                         },
                     ],
                     isError: true,
