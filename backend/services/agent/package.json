@@ -21,6 +21,7 @@
     "@langchain/qdrant": "^1.0.3",
     "@langchain/tavily": "^1.2.0",
     "@langchain/textsplitters": "^1.0.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "axios": "^1.19.0",
     "cloudinary": "^2.10.1",
     "dotenv": "^17.4.2",
@@ -30,6 +31,7 @@
     "nodemon": "^3.1.14",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.20.1",
-    "pptxgenjs": "^4.0.1"
+    "pptxgenjs": "^4.0.1",
+    "zod": "^4.6.5"
   }
 }
