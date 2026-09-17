@@ -43,12 +43,13 @@ services:
 
   agent:
     build:
-      context: .
-      dockerfile: services/agent/Dockerfile
+      context: ..
+      dockerfile: backend/services/agent/Dockerfile
     env_file:
       - ./services/agent/.env
     environment:
       AUTH_SERVICE: http://auth:8001
+      CHAT_SERVICE: http://chat:8002
       PORT: 8003
       REDIS_URL: redis://redis:6379
     ports:

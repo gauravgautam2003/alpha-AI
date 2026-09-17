@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LuCheck, LuCode, LuCopy, LuEye, LuPanelRightClose, LuPanelRightOpen, LuX } from "react-icons/lu";
 import { useSelector } from 'react-redux';
-import { AnimatePresence, easeInOut, motion } from "motion/react";
+import { easeInOut, motion } from "motion/react";
 import Editor from "@monaco-editor/react"
 
 function Artifact() {
@@ -9,7 +9,6 @@ function Artifact() {
     const [tab, setTab] = useState("Code")
     const [activeFile, setActiveFile] = useState(0)
     const [copyCode, setCopyCode] = useState("");
-    const [mobileOpen, setMobileOpen] = useState(false);
 
     const { artifacts } = useSelector(state => state.message)
     const artifact = artifacts?.[0]
@@ -196,35 +195,6 @@ function Artifact() {
     }
     return (
         <>
-            <button className='lg:hidden fixed bottom-24 right-4 z-40 flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-medium shadow-lg shadow-indigo-500/20 border-none cursor-pointer transition-colors duration-150'>
-                <LuCode size={13} />
-                View Code
-            </button>
-            <AnimatePresence>
-                {
-                    mobileOpen &&
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={() => setMobileOpen(false)}
-                            className='lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm'
-                        />
-                        <motion.div
-                            initial={{ x: "100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "100%" }}
-                            transition={{ duration: 0.25, ease: "easeInOut" }}
-                            className='lg:hidden fixed inset-y-0 right-0 z-50 w-[88vw] max-w-140 border-l border-white/6 overflow-hidden'
-                        >
-                            {renderPanelContent(() => setMobileOpen(false))}
-                        </motion.div>
-                    </>
-                }
-            </AnimatePresence>
-
             <motion.div
                 initial={{ width: 400 }}
                 animate={{ width: collapsed ? 48 : 400 }}
@@ -232,7 +202,7 @@ function Artifact() {
                     duration: 0.25,
                     ease: easeInOut
                 }}
-                className='glass-panel hidden xl:flex h-full border-l border-white/70 flex-col overflow-hidden shrink-0'
+                className='glass-panel hidden lg:flex h-full border-l border-white/70 flex-col overflow-hidden shrink-0'
             >
                 {renderPanelContent()}
             </motion.div>

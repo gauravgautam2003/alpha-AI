@@ -1,6 +1,45 @@
 import { checkAgentLimit } from "../config/agentLimit.js";
 import { getModel } from "../config/llmModels.js";
 import { deductCredits } from "../utils/deductCredits.js";
+import { createMCPTools } from "../mcp/mcpTools.js";
+import { HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+
+const responseText = (response) => Array.isArray(response?.content)
+    ? response.content.map((part) => typeof part === "string" ? part : part?.text || "").join("")
+    : String(response?.content ?? "");
+
+async function runWorkspaceCodingAgent(llm, state) {
+    const tools = await createMCPTools(state.workspacePath);
+    const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
+    const messages = [
+        new SystemMessage(`You are Alpha AI's coding agent with access to the user's selected VS Code workspace.
+Use workspace tools when they are needed to inspect, edit, validate, or report on the code. Work only inside that workspace.
+Read relevant files before editing. Make focused fixes, do not delete files or directories unless the user explicitly asks, and run only safe validation commands when useful.
+After tool use, give a concise summary of files changed, what was fixed, and any verification result.`),
+        new HumanMessage(state.prompt),
+    ];
+    const toolEnabledModel = llm.bindTools(tools);
+
+    for (let step = 0; step < 8; step += 1) {
+        const response = await toolEnabledModel.invoke(messages);
+        messages.push(response);
+        const toolCalls = response.tool_calls || [];
+        if (toolCalls.length === 0) return responseText(response);
+
+        for (const call of toolCalls) {
+            const tool = toolByName.get(call.name);
+            const output = tool
+                ? await tool.invoke(call.args || {})
+                : `Tool not found: ${call.name}`;
+            messages.push(new ToolMessage({
+                content: typeof output === "string" ? output : JSON.stringify(output),
+                tool_call_id: call.id,
+            }));
+        }
+    }
+
+    return "I completed the workspace operations, but stopped before further tool calls to keep the change set safe. Please review the reported changes in VS Code.";
+}
 
 export const codingAgent = async (state) => {
     try {
@@ -8,6 +47,12 @@ export const codingAgent = async (state) => {
 
         const intentLLM = await getModel("intent", state.plan);
         const llm = await getModel("coding", state.plan);
+
+        if (state.workspacePath) {
+            const data = await runWorkspaceCodingAgent(llm, state);
+            await deductCredits(state.userId, "coding");
+            return { ...state, aiResponse: data, artifacts: [] };
+        }
 
         // -----------------------------
         // 1. INTENT CLASSIFICATION
@@ -28,9 +73,7 @@ User request:
 ${state.prompt}
 `);
 
-        const rawIntent = Array.isArray(intentRes?.content)
-            ? intentRes.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
-            : String(intentRes?.content ?? "");
+        const rawIntent = responseText(intentRes);
 
         const intentUpper = rawIntent.trim().toUpperCase();
         const isCodeGeneration =
@@ -76,9 +119,7 @@ ${state.prompt}
 `;
 
             const response = await llm.invoke(prompt);
-            const rawContent = Array.isArray(response?.content)
-                ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
-                : String(response?.content ?? "");
+            const rawContent = responseText(response);
 
             const cleanText = rawContent
                 .replace(/```json/gi, "")
@@ -130,9 +171,7 @@ User Request:
 ${state.prompt}
 `);
 
-        const data = Array.isArray(response?.content)
-            ? response.content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("")
-            : String(response?.content ?? "");
+        const data = responseText(response);
 
         await deductCredits(state.userId, "coding");
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LuCode, LuFileText, LuGlobe, LuImage, LuMessageSquare, LuMic, LuMicOff, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
+import { LuCode, LuFileText, LuFolderOpen, LuGlobe, LuImage, LuMessageSquare, LuMic, LuMicOff, LuPaperclip, LuPresentation, LuSend, LuX, LuZap } from "react-icons/lu";
 import { useDispatch, useSelector } from "react-redux"
 import { sendMessage } from '../features/sendMessage';
 import { addMessage, setArtifacts, setIsLoading } from '../redux/messageSlice';
@@ -8,6 +8,7 @@ import { addConversation, setConversationTitle, setSelectedConversation } from '
 import { updateConversation } from '../features/updateConversation';
 import { motion } from 'motion/react';
 import { openAuth, setValue } from '../redux/uiSlice';
+import api from '../utils/axios';
 
 function ChatInput() {
     const { userData } = useSelector(state => state.user);
@@ -18,6 +19,8 @@ function ChatInput() {
     const [isSending, setIsSending] = useState(false);
     const [requestError, setRequestError] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+    const [workspacePath, setWorkspacePath] = useState(() => localStorage.getItem("alpha-workspace-path") || "");
+    const [isPickingWorkspace, setIsPickingWorkspace] = useState(false);
     const [listening, setListening] = useState(false)
     const [volume, setVolume] = useState(0)
     const recognitionRef = useRef(null)
@@ -164,6 +167,18 @@ function ChatInput() {
         dispatch(setIsLoading(true));
         setRequestError("");
 
+        const openWorkspaceInVSCode = () => {
+            const normalizedPath = workspacePath.trim().replace(/\\/g, "/");
+            if (!normalizedPath) return;
+            const encodedPath = normalizedPath.split("/").map(encodeURIComponent).join("/");
+            window.location.assign(`vscode://file/${encodedPath}`);
+        };
+
+        // This runs directly from Send, so browsers do not treat it as a popup.
+        if (selectedAgent === "Coding" && workspacePath.trim()) {
+            openWorkspaceInVSCode();
+        }
+
         try {
             let conversation = selectedConversation;
 
@@ -191,11 +206,19 @@ function ChatInput() {
             formData.append("prompt", messageValue)
             formData.append("conversationId", conversation._id)
             formData.append("agent", selectedAgent.toLowerCase())
+            if (workspacePath.trim()) {
+                formData.append("workspacePath", workspacePath.trim())
+            }
             if (selectedFile) {
                 formData.append("file", selectedFile)
             }
 
             const data = await sendMessage(formData);
+
+            // In Auto mode, the backend tells us whether it selected the coding route.
+            if (selectedAgent === "Auto" && data?.agent === "coding" && workspacePath.trim()) {
+                openWorkspaceInVSCode();
+            }
 
 
             const responseText = typeof data === 'string'
@@ -212,12 +235,28 @@ function ChatInput() {
             }));
         } catch (error) {
             console.error("send message error", error);
-            setRequestError("Message could not be sent. Please try again.");
+            const serverMessage = error.response?.data?.message;
+            setRequestError(serverMessage || "Message could not be sent. Please check that the gateway and agent services are running.");
         } finally {
             dispatch(setIsLoading(false));
             setIsSending(false);
         }
     }
+
+    const pickWorkspace = async () => {
+        setIsPickingWorkspace(true);
+        setRequestError("");
+        try {
+            const { data } = await api.get("/api/agent/workspace-picker");
+            if (!data?.workspacePath) return;
+            setWorkspacePath(data.workspacePath);
+            localStorage.setItem("alpha-workspace-path", data.workspacePath);
+        } catch (error) {
+            setRequestError(error.response?.data?.message || "Could not open the workspace picker.");
+        } finally {
+            setIsPickingWorkspace(false);
+        }
+    };
 
     const agents = [
         {
@@ -264,6 +303,27 @@ function ChatInput() {
     return (
         <div className='w-full overflow-hidden px-3 md:px-6 pb-5 pt-2 shrink-0'>
             <div className='mirror-surface max-w-5xl mx-auto flex flex-col gap-3 rounded-3xl px-4 pt-3.5 pb-3'>
+                {(selectedAgent === "Coding" || selectedAgent === "Auto") && (
+                    <div className='flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-slate-500'>
+                        <LuFolderOpen size={15} className='shrink-0 text-sky-600' />
+                        <input
+                            type='text'
+                            value={workspacePath}
+                            onChange={(event) => {
+                                const nextPath = event.target.value;
+                                setWorkspacePath(nextPath);
+                                localStorage.setItem("alpha-workspace-path", nextPath);
+                            }}
+                            placeholder='Select a VS Code workspace to give the coding agent context'
+                            aria-label='VS Code workspace path'
+                            className='min-w-0 flex-1 bg-transparent outline-none placeholder:text-slate-400'
+                        />
+                        <button type='button' onClick={pickWorkspace} disabled={isPickingWorkspace} className='shrink-0 rounded-lg border border-sky-200/70 px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-50 disabled:cursor-wait disabled:opacity-60'>
+                            {isPickingWorkspace ? 'Opening…' : 'Select folder'}
+                        </button>
+                    </div>
+                )}
+
                 <div className='flex gap-2 flex-wrap pr-3'>
                     {agents.map((agent) => {
                         const isActive = selectedAgent === agent.label

@@ -11,4 +11,5 @@ export const agentState = Annotation.Root({
     userId: Annotation(),
     plan: Annotation(),
     file: Annotation(),
-}) 
+    workspacePath: Annotation(),
+})

@@ -2,14 +2,15 @@ FROM node
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install
 
-COPY ./services/agent/package*.json ./services/agent/
+COPY backend/services/agent/package*.json ./services/agent/
 RUN cd services/agent && npm install
 
-COPY services/agent ./services/agent
-COPY shared ./shared
+COPY backend/services/agent ./services/agent
+COPY mcp-server ./mcp-server
+COPY backend/shared ./shared
 
 WORKDIR /app/services/agent
 

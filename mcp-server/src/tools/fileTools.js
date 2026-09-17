@@ -104,6 +104,9 @@ export function registerFileTools(server) {
             try {
                 const filePath = resolveWorkspacePath(path);
 
+                await fs.mkdir(pathModule.dirname(filePath), {
+                    recursive: true,
+                });
                 await fs.writeFile(
                     filePath,
                     content,

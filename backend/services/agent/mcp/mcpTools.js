@@ -64,9 +64,9 @@ function jsonSchemaToZod(schema = {}) {
 
 
 // Create LangChain tools from MCP tools
-export async function createMCPTools() {
+export async function createMCPTools(workspacePath) {
 
-    const mcpTools = await getMCPTools();
+    const mcpTools = await getMCPTools(workspacePath);
 
     return mcpTools.map((tool) => {
 
@@ -81,6 +81,7 @@ export async function createMCPTools() {
                 try {
 
                     const result = await callMCPTool(
+                        workspacePath,
                         tool.name,
                         input
                     );

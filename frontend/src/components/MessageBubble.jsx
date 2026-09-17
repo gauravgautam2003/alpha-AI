@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LuCheck, LuCopy, LuDownload, LuExternalLink, LuX } from 'react-icons/lu';
+import { LuCheck, LuCopy, LuDownload, LuExternalLink, LuEye, LuX } from 'react-icons/lu';
 import Markdown from "react-markdown";
 import { Prism as SyntaxHighLighter } from "react-syntax-highlighter"
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
@@ -7,6 +7,46 @@ import remarkGfm from "remark-gfm";
 import { AnimatePresence, motion } from "motion/react";
 
 
+
+function MobileProjectArtifact({ artifact }) {
+    const [activeFile, setActiveFile] = useState(0);
+    const [preview, setPreview] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const files = artifact?.files || [];
+    const file = files[activeFile];
+    const htmlFile = files.find((entry) => entry.name?.toLowerCase() === "index.html");
+    const cssFile = files.find((entry) => entry.name?.toLowerCase() === "style.css");
+    const scriptFile = files.find((entry) => entry.name?.toLowerCase() === "script.js");
+    const previewDoc = htmlFile && `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>${cssFile?.content || ""}</style></head><body>${htmlFile.content}<script>${scriptFile?.content || ""}</script></body></html>`;
+
+    if (!files.length) return null;
+
+    const copyFile = async () => {
+        await navigator.clipboard.writeText(file?.content || "");
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1800);
+    };
+
+    return (
+        <section className='lg:hidden mt-3 overflow-hidden rounded-xl border border-white/10 bg-[#111318] text-slate-200'>
+            <div className='flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2'>
+                <span className='truncate text-xs font-semibold'>{artifact.title || 'Generated code'}</span>
+                <div className='flex shrink-0 items-center gap-1'>
+                    <button type='button' onClick={copyFile} className='inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-slate-300 hover:bg-white/10'>
+                        {copied ? <LuCheck size={13} /> : <LuCopy size={13} />}{copied ? 'Copied' : 'Copy'}
+                    </button>
+                    {htmlFile && <button type='button' onClick={() => setPreview((value) => !value)} className='inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-slate-300 hover:bg-white/10'>
+                        <LuEye size={13} />{preview ? 'Code' : 'Preview'}
+                    </button>}
+                </div>
+            </div>
+            {!preview && <div className='flex overflow-x-auto border-b border-white/10'>
+                {files.map((entry, index) => <button key={`${entry.name}-${index}`} type='button' onClick={() => setActiveFile(index)} className={`shrink-0 px-3 py-2 text-[11px] ${activeFile === index ? 'bg-white/10 text-white' : 'text-slate-500'}`}>{entry.name}</button>)}
+            </div>}
+            {preview ? <iframe title='Generated project preview' sandbox='allow-scripts' srcDoc={previewDoc} className='h-72 w-full bg-white' /> : <pre className='max-h-72 overflow-auto p-3 text-xs leading-5'><code>{file?.content || ''}</code></pre>}
+        </section>
+    );
+}
 
 function MessageBubble({ role, content, images = [], artifacts = [] }) {
     const [lightBox, setLightBox] = useState(null);
@@ -104,6 +144,9 @@ function MessageBubble({ role, content, images = [], artifacts = [] }) {
                         ))}
                     </div>
                 )}
+                {artifacts.filter((artifact) => Array.isArray(artifact?.files) && artifact.files.length > 0).map((artifact, index) => (
+                    <MobileProjectArtifact key={artifact.id || `project-${index}`} artifact={artifact} />
+                ))}
                 <Markdown remarkPlugins={[remarkGfm]}
                     components={{
                         h1: ({ children }) => (
