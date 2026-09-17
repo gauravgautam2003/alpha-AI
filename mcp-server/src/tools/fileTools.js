@@ -1,22 +1,60 @@
+
 import fs from "node:fs/promises";
+import pathModule from "node:path";
 import { z } from "zod";
 import { resolveWorkspacePath } from "../workspace.js";
-import pathModule from "node:path";
+
+
+// Resolve destination.
+// If destination is an existing directory,
+// place the source file inside that directory.
+async function resolveFileDestination(sourcePath, destinationPath) {
+    try {
+        const destinationStats = await fs.stat(destinationPath);
+
+        return destinationStats.isDirectory()
+            ? pathModule.join(
+                destinationPath,
+                pathModule.basename(sourcePath)
+            )
+            : destinationPath;
+
+    } catch (error) {
+        if (error.code === "ENOENT") {
+            return destinationPath;
+        }
+
+        throw error;
+    }
+}
+
 
 export function registerFileTools(server) {
+
+    // ==========================================
+    // READ FILE
+    // ==========================================
+
     server.registerTool(
         "read_file",
         {
             description: "Read a file from the VS Code workspace",
 
             inputSchema: {
-                path: z.string().describe("Workspace-relative file path"),
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
             },
         },
+
         async ({ path }) => {
             try {
                 const filePath = resolveWorkspacePath(path);
-                const content = await fs.readFile(filePath, "utf-8");
+
+                const content = await fs.readFile(
+                    filePath,
+                    "utf-8"
+                );
 
                 return {
                     content: [
@@ -26,6 +64,7 @@ export function registerFileTools(server) {
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
@@ -40,6 +79,10 @@ export function registerFileTools(server) {
         }
     );
 
+
+    // ==========================================
+    // WRITE FILE
+    // ==========================================
 
     server.registerTool(
         "write_file",
@@ -75,6 +118,7 @@ export function registerFileTools(server) {
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
@@ -89,12 +133,20 @@ export function registerFileTools(server) {
         }
     );
 
+
+    // ==========================================
+    // CREATE DIRECTORY
+    // ==========================================
+
     server.registerTool(
         "create_directory",
         {
-            description: "Create a directrory in the vs code workspace",
+            description: "Create a directory in the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Workspace-relative directory path")
+                path: z
+                    .string()
+                    .describe("Workspace-relative directory path"),
             },
         },
 
@@ -103,37 +155,46 @@ export function registerFileTools(server) {
                 const directoryPath = resolveWorkspacePath(path);
 
                 await fs.mkdir(directoryPath, {
-                    recursive: true
+                    recursive: true,
                 });
 
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `Directory created successfully: ${path}`
+                            text: `Directory created successfully: ${path}`,
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `Failed to create directory: ${error.message}`
+                            text: `Failed to create directory: ${error.message}`,
                         },
                     ],
                     isError: true,
-                }
+                };
             }
         }
     );
 
+
+    // ==========================================
+    // DELETE FILE
+    // ==========================================
+
     server.registerTool(
         "delete_file",
         {
-            description: "Delete a file from the vs code workspace",
+            description: "Delete a file from the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Workspace-relative file path")
+                path: z
+                    .string()
+                    .describe("Workspace-relative file path"),
             },
         },
 
@@ -147,30 +208,39 @@ export function registerFileTools(server) {
                     content: [
                         {
                             type: "text",
-                            text: `File deleted successfully: ${path}`
+                            text: `File deleted successfully: ${path}`,
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `Failed to delete file: ${error.message}`
+                            text: `Failed to delete file: ${error.message}`,
                         },
                     ],
                     isError: true,
-                }
+                };
             }
         }
     );
 
+
+    // ==========================================
+    // DELETE DIRECTORY
+    // ==========================================
+
     server.registerTool(
         "delete_directory",
         {
-            description: "Delete a directory from the vs code workspace",
+            description: "Delete a directory from the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Workspace-relative directory path")
+                path: z
+                    .string()
+                    .describe("Workspace-relative directory path"),
             },
         },
 
@@ -191,6 +261,7 @@ export function registerFileTools(server) {
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
@@ -199,41 +270,63 @@ export function registerFileTools(server) {
                             text: `Failed to delete directory: ${error.message}`,
                         },
                     ],
+                    isError: true,
                 };
-            };
-        },
+            }
+        }
     );
+
+
+    // ==========================================
+    // MOVE FILE
+    // ==========================================
 
     server.registerTool(
         "move_file",
         {
             description: "Move or rename a file in the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Current workspace-relative file path")
+                source: z
+                    .string()
+                    .describe("Current workspace-relative file path"),
+
+                destination: z
+                    .string()
+                    .describe("Destination workspace-relative file or directory path"),
             },
         },
 
         async ({ source, destination }) => {
             try {
                 const sourcePath = resolveWorkspacePath(source);
-                const destinationPath = resolveWorkspacePath(destination);
 
-                await fs.rename(sourcePath, destinationPath);
+                const destinationPath =
+                    await resolveFileDestination(
+                        sourcePath,
+                        resolveWorkspacePath(destination)
+                    );
+
+                await fs.rename(
+                    sourcePath,
+                    destinationPath
+                );
 
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `File moved successfully: ${source} -> ${destination}`
+                            text: `File moved successfully: ${source} -> ${destination}`,
                         },
                     ],
                 };
+
             } catch (error) {
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `Failed to move file: ${error.message}`
+                            text: `Failed to move file: ${error.message}`,
                         },
                     ],
                     isError: true,
@@ -242,31 +335,47 @@ export function registerFileTools(server) {
         }
     );
 
+
+    // ==========================================
+    // COPY FILE
+    // ==========================================
+
     server.registerTool(
         "copy_file",
         {
             description: "Copy a file in the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Destination workspace-relative file path")
+                source: z
+                    .string()
+                    .describe("Source workspace-relative file path"),
+
+                destination: z
+                    .string()
+                    .describe("Destination workspace-relative file or directory path"),
             },
         },
 
         async ({ source, destination }) => {
             try {
                 const sourcePath = resolveWorkspacePath(source);
-                const destinationPath = resolveWorkspacePath(destination);
+
+                const destinationPath =
+                    await resolveFileDestination(
+                        sourcePath,
+                        resolveWorkspacePath(destination)
+                    );
 
                 await fs.copyFile(
                     sourcePath,
                     destinationPath
                 );
 
-
                 return {
                     content: [
                         {
                             type: "text",
-                            text: `File copy successfully: ${source} -> ${destination}`
+                            text: `File copied successfully: ${source} -> ${destination}`,
                         },
                     ],
                 };
@@ -276,67 +385,181 @@ export function registerFileTools(server) {
                     content: [
                         {
                             type: "text",
-                            text: `Failed to copy file: ${error.message}`
+                            text: `Failed to copy file: ${error.message}`,
                         },
                     ],
                     isError: true,
                 };
-            };
-        },
+            }
+        }
     );
 
+
+    // ==========================================
+    // SEARCH FILES
+    // ==========================================
+
     server.registerTool(
-        "search_file",
+        "search_files",
         {
             description: "Search for text inside files in the VS Code workspace",
+
             inputSchema: {
-                path: z.string().describe("Text to search for")
+                query: z
+                    .string()
+                    .describe("Text to search for"),
+
+                path: z
+                    .string()
+                    .default("")
+                    .describe("Workspace-relative directory or file path"),
             },
         },
 
         async ({ query, path: directoryPath }) => {
             try {
-                const rootPath = resolveWorkspacePath(directoryPath);
+                const rootPath =
+                    resolveWorkspacePath(directoryPath);
+
                 const results = [];
 
+                const rootStats =
+                    await fs.stat(rootPath);
+
+
+                // ------------------------------------------
+                // SEARCH A SINGLE FILE
+                // ------------------------------------------
+
+                if (rootStats.isFile()) {
+
+                    try {
+                        const content =
+                            await fs.readFile(
+                                rootPath,
+                                "utf-8"
+                            );
+
+                        if (content.includes(query)) {
+                            results.push(
+                                pathModule.relative(
+                                    resolveWorkspacePath(""),
+                                    rootPath
+                                )
+                            );
+                        }
+
+                    } catch {
+                        // Ignore binary/unreadable files
+                    }
+
+                    return {
+                        content: [
+                            {
+                                type: "text",
+                                text: JSON.stringify(
+                                    {
+                                        query,
+                                        results,
+                                    },
+                                    null,
+                                    2
+                                ),
+                            },
+                        ],
+                    };
+                }
+
+
+                // ------------------------------------------
+                // SEARCH DIRECTORY RECURSIVELY
+                // ------------------------------------------
+
                 async function searchDirectory(currentPath) {
-                    const entries = await fs.readdir(currentPath, {
-                        withFileTypes: true
-                    });
+
+                    const entries =
+                        await fs.readdir(
+                            currentPath,
+                            {
+                                withFileTypes: true,
+                            }
+                        );
+
 
                     for (const entry of entries) {
-                        if (entry.name == "node_modules" || entry.name == ".git") continue;
-                    }
 
-                    const fullPath = pathModule.join(currentPath, entry.name);
+                        // Skip large/unnecessary folders
+                        if (
+                            entry.name === "node_modules" ||
+                            entry.name === ".git"
+                        ) {
+                            continue;
+                        }
 
-                    if (entry.isDirectory()) {
-                        await searchDirectory(fullPath);
-                    }
-                    else {
-                        try {
-                            const content = await fs.readFile(fullPath, "utf-8");
 
-                            if (content.includes(query)) {
-                                results.push(path.relative(rootPath, fullPath));
+                        const fullPath =
+                            pathModule.join(
+                                currentPath,
+                                entry.name
+                            );
+
+
+                        if (entry.isDirectory()) {
+
+                            await searchDirectory(
+                                fullPath
+                            );
+
+                        } else {
+
+                            try {
+
+                                const content =
+                                    await fs.readFile(
+                                        fullPath,
+                                        "utf-8"
+                                    );
+
+
+                                if (
+                                    content.includes(query)
+                                ) {
+                                    results.push(
+                                        pathModule.relative(
+                                            resolveWorkspacePath(""),
+                                            fullPath
+                                        )
+                                    );
+                                }
+
+                            } catch {
+                                // Ignore binary/unreadable files
                             }
-                        } catch (error) {
-                            // Ignore binary/unreadable files
                         }
                     }
                 }
+
+
                 await searchDirectory(rootPath);
+
 
                 return {
                     content: [
                         {
                             type: "text",
-                            text: JSON.stringify({ query, results }, null, 2)
+                            text: JSON.stringify(
+                                {
+                                    query,
+                                    results,
+                                },
+                                null,
+                                2
+                            ),
                         },
                     ],
                 };
-            }
-            catch (error) {
+
+            } catch (error) {
                 return {
                     content: [
                         {
@@ -348,5 +571,6 @@ export function registerFileTools(server) {
                 };
             }
         }
-    )
+    );
 }
+
