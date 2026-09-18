@@ -129,13 +129,23 @@ function SideBar() {
 
                 <div className='flex flex-col h-full'>
                     <div className='flex items-center gap-2.5 px-4 py-4 border-b border-white/10'>
-                        <button type='button' className='icon-control hidden lg:flex w-7 h-7 rounded-lg'
+                        <button
+                            type='button'
+                            className='icon-control !hidden lg:!flex w-7 h-7 rounded-lg'
                             onClick={() => setCollapsed(true)}
+                            aria-label='Collapse sidebar'
+                            title='Collapse sidebar'
                         >
                             <LuPanelLeft />
                         </button>
 
-                        <button className='lg:hidden flex items-center justify-center w-7 h-7  rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent border-none cursor-pointer' onClick={() => setMobileOpen(false)}>
+                        <button
+                            type='button'
+                            className='icon-control !flex lg:!hidden w-7 h-7 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent border-none cursor-pointer'
+                            onClick={() => setMobileOpen(false)}
+                            aria-label='Close sidebar'
+                            title='Close sidebar'
+                        >
                             <LuX />
                         </button>
 

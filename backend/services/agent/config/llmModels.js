@@ -81,6 +81,14 @@ export const getModel = (agent, plan = "free") => {
     }
 
     // ============================================
+    // CODING
+    // Always use DeepSeek for coding
+    // ============================================
+    if (agent === "coding") {
+        return deepseekCoder;
+    }
+
+    // ============================================
     // PDF RAG / IMAGE ANALYSIS
     // Gemini handles multimodal tasks
     // ============================================
@@ -140,7 +148,7 @@ export const getModel = (agent, plan = "free") => {
     // ============================================
     switch (agent) {
         case "coding":
-            return groqFast;
+            return deepseekCoder;
 
         case "chat":
         case "resume":

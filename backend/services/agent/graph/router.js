@@ -20,6 +20,14 @@ export const router = async (state) => {
         }
     }
 
+    // Workspace attached without file -> route to coding agent
+    if (state.workspacePath) {
+        return {
+            ...state,
+            agent: "coding"
+        };
+    }
+
     // Uploaded files must use their reader/analyzer, even if the UI mode is PDF or Image.
     if (state.agent && state.agent !== "auto") {
         return {

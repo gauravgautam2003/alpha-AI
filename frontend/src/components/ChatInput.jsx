@@ -22,6 +22,10 @@ function ChatInput() {
     const [workspacePath, setWorkspacePath] = useState(() => localStorage.getItem("alpha-workspace-path") || "");
     const [isPickingWorkspace, setIsPickingWorkspace] = useState(false);
     const [listening, setListening] = useState(false)
+
+    useEffect(() => {
+        localStorage.setItem("alpha-workspace-path", workspacePath || "");
+    }, [workspacePath]);
     const [volume, setVolume] = useState(0)
     const recognitionRef = useRef(null)
     const transcriptRef = useRef("")
@@ -31,6 +35,49 @@ function ChatInput() {
     const animationFrameRef = useRef(null)
     const fileRef = useRef(null)
     const dispatch = useDispatch();
+
+    const handleSelectWorkspace = async () => {
+        setIsPickingWorkspace(true);
+        setRequestError("");
+
+        try {
+            let nextPath = null;
+
+            if (window.electronAPI?.selectWorkspace) {
+                const result = await window.electronAPI.selectWorkspace();
+
+                if (!result || result.canceled || !result.path) {
+                    return;
+                }
+
+                nextPath = String(result.path).trim();
+
+                // Open VS Code
+                if (window.electronAPI?.openVSCode) {
+                    await window.electronAPI.openVSCode(nextPath).catch((err) => {
+                        console.warn("Could not launch VS Code from Electron API:", err);
+                    });
+                }
+            } else {
+                // Web browser fallback to backend workspace-picker
+                const res = await api.get("/api/agent/workspace-picker");
+                if (res.data?.workspacePath) {
+                    nextPath = String(res.data.workspacePath).trim();
+                }
+            }
+
+            if (nextPath) {
+                setWorkspacePath(nextPath);
+                setSelectedAgent("Coding");
+                setRequestError("");
+            }
+        } catch (error) {
+            console.error("Workspace selection error:", error);
+            setRequestError(error.response?.data?.message || error.message || "Failed to select workspace");
+        } finally {
+            setIsPickingWorkspace(false);
+        }
+    };
 
     const stopVolumeMonitor = () => {
         if (animationFrameRef.current) {
@@ -156,6 +203,7 @@ function ChatInput() {
     }
     const handleSendMessage = async () => {
         const messageValue = value.trim();
+
         if (!messageValue || isSending) return;
 
         if (!userData) {
@@ -167,23 +215,12 @@ function ChatInput() {
         dispatch(setIsLoading(true));
         setRequestError("");
 
-        const openWorkspaceInVSCode = () => {
-            const normalizedPath = workspacePath.trim().replace(/\\/g, "/");
-            if (!normalizedPath) return;
-            const encodedPath = normalizedPath.split("/").map(encodeURIComponent).join("/");
-            window.location.assign(`vscode://file/${encodedPath}`);
-        };
-
-        // This runs directly from Send, so browsers do not treat it as a popup.
-        if (selectedAgent === "Coding" && workspacePath.trim()) {
-            openWorkspaceInVSCode();
-        }
-
         try {
             let conversation = selectedConversation;
 
             if (!conversation) {
                 const conv = await createConversation();
+
                 if (!conv?._id) {
                     throw new Error("Conversation could not be created");
                 }
@@ -194,70 +231,84 @@ function ChatInput() {
             }
 
             if (conversation.title == "New Chat") {
-                await updateConversation({ id: conversation._id, title: messageValue });
-                dispatch(setConversationTitle({ conversationId: conversation._id, title: messageValue.slice(0, 40) }));
+                await updateConversation({
+                    id: conversation._id,
+                    title: messageValue
+                });
+
+                dispatch(
+                    setConversationTitle({
+                        conversationId: conversation._id,
+                        title: messageValue.slice(0, 40)
+                    })
+                );
             }
 
-            dispatch(addMessage({ role: "user", content: value }));
+            dispatch(addMessage({
+                role: "user",
+                content: value
+            }));
+
             dispatch(setValue(""));
 
+            const formData = new FormData();
 
-            const formData = new FormData()
-            formData.append("prompt", messageValue)
-            formData.append("conversationId", conversation._id)
-            formData.append("agent", selectedAgent.toLowerCase())
+            formData.append("prompt", messageValue);
+            formData.append("conversationId", conversation._id);
+            formData.append("agent", selectedAgent.toLowerCase());
+
             if (workspacePath.trim()) {
-                formData.append("workspacePath", workspacePath.trim())
+                formData.append(
+                    "workspacePath",
+                    workspacePath.trim()
+                );
             }
+
             if (selectedFile) {
-                formData.append("file", selectedFile)
+                formData.append("file", selectedFile);
             }
 
             const data = await sendMessage(formData);
 
-            // In Auto mode, the backend tells us whether it selected the coding route.
-            if (selectedAgent === "Auto" && data?.agent === "coding" && workspacePath.trim()) {
-                openWorkspaceInVSCode();
-            }
+            const responseText =
+                typeof data === "string"
+                    ? data
+                    : (
+                        data?.aiResponse ||
+                        data?.answer ||
+                        data?.content ||
+                        data?.text ||
+                        data?.message ||
+                        JSON.stringify(data)
+                    );
 
+            setSelectedFile(null);
 
-            const responseText = typeof data === 'string'
-                ? data
-                : (data?.aiResponse || data?.answer || data?.content || data?.text || data?.message || JSON.stringify(data));
-
-            setSelectedFile(null)
             dispatch(setArtifacts(data?.artifacts || []));
+
             dispatch(addMessage({
                 role: "assistant",
                 content: responseText,
                 images: data?.images || [],
                 artifacts: data?.artifacts || []
             }));
+
         } catch (error) {
             console.error("send message error", error);
-            const serverMessage = error.response?.data?.message;
-            setRequestError(serverMessage || "Message could not be sent. Please check that the gateway and agent services are running.");
+
+            const serverMessage =
+                error.response?.data?.message;
+
+            setRequestError(
+                serverMessage ||
+                "Message could not be sent. Please check that the gateway and agent services are running."
+            );
+
         } finally {
             dispatch(setIsLoading(false));
             setIsSending(false);
         }
-    }
-
-    const pickWorkspace = async () => {
-        setIsPickingWorkspace(true);
-        setRequestError("");
-        try {
-            const { data } = await api.get("/api/agent/workspace-picker");
-            if (!data?.workspacePath) return;
-            setWorkspacePath(data.workspacePath);
-            localStorage.setItem("alpha-workspace-path", data.workspacePath);
-        } catch (error) {
-            setRequestError(error.response?.data?.message || "Could not open the workspace picker.");
-        } finally {
-            setIsPickingWorkspace(false);
-        }
     };
-
     const agents = [
         {
             id: "auto",
@@ -398,10 +449,42 @@ function ChatInput() {
 
                         }
                         {(selectedAgent === "Coding" || selectedAgent === "Auto") && (
-                            <div className='flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-500'>
-                                <button type='button' onClick={pickWorkspace} disabled={isPickingWorkspace} className='shrink-0 rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-bold text-gray-200 hover:text-gray-300 transition-colors disabled:cursor-not-allowed disabled:opacity-50'>
-                                    {isPickingWorkspace ? 'Opening…' : 'Select folder'}
+                            <div className='flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] p-1 text-xs text-slate-300'>
+                                <button
+                                    type='button'
+                                    onClick={handleSelectWorkspace}
+                                    disabled={isPickingWorkspace}
+                                    className='flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] font-bold text-gray-200 hover:text-white hover:bg-white/5 transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                                    title={workspacePath ? `Active folder: ${workspacePath}` : "Select folder to code with VS Code & MCP"}
+                                >
+                                    <LuFolderOpen size={13} className='text-sky-400' />
+                                    {isPickingWorkspace ? 'Opening…' : workspacePath ? (workspacePath.split(/[\\/]/).filter(Boolean).pop() || 'Workspace') : 'Select folder'}
                                 </button>
+
+                                {workspacePath && (
+                                    <>
+                                        <button
+                                            type='button'
+                                            onClick={async () => {
+                                                if (window.electronAPI?.openVSCode) {
+                                                    await window.electronAPI.openVSCode(workspacePath);
+                                                }
+                                            }}
+                                            className='rounded-md px-1.5 py-1 text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors'
+                                            title='Open / focus in VS Code'
+                                        >
+                                            VS Code ↗
+                                        </button>
+                                        <button
+                                            type='button'
+                                            onClick={() => setWorkspacePath("")}
+                                            className='rounded-md p-1 text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors'
+                                            title='Clear folder'
+                                        >
+                                            <LuX size={12} />
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>

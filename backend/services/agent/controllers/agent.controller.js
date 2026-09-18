@@ -29,6 +29,21 @@ export const selectWorkspace = async (req, res, next) => {
 
         const workspacePath = stdout.trim();
         if (!workspacePath) return res.status(204).end();
+
+        // Automatically launch VS Code on Windows
+        try {
+            const { spawn } = await import("node:child_process");
+            const vscodeProcess = spawn("code", ["--new-window", workspacePath], {
+                detached: true,
+                stdio: "ignore",
+                windowsHide: false,
+                shell: true
+            });
+            vscodeProcess.unref();
+        } catch (err) {
+            console.error("Could not launch VS Code from workspace-picker:", err);
+        }
+
         return res.status(200).json({ workspacePath });
     } catch (error) {
         next(error);

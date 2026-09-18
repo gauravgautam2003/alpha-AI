@@ -356,7 +356,7 @@ describe("LLM Model tiering logic", () => {
             return "groq-versatile";
         } else {
             // free
-            if (agent === "coding") return "groq-versatile";
+            if (agent === "coding") return "deepseek-coder";
             return "groq-fast";
         }
     }
@@ -394,8 +394,8 @@ describe("LLM Model tiering logic", () => {
         assert.equal(getModelName("coding", "starter"), "deepseek-coder");
     });
 
-    test("free tier coding uses groq-versatile (still decent)", () => {
-        assert.equal(getModelName("coding", "free"), "groq-versatile");
+    test("free tier coding uses deepseek-coder", () => {
+        assert.equal(getModelName("coding", "free"), "deepseek-coder");
     });
 
     test("pro resume uses gemini-flash (best for PDF structure)", () => {

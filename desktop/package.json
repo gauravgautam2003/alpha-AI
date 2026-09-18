@@ -1,0 +1,19 @@
+{
+  "name": "alpha-ai-desktop",
+  "version": "1.0.0",
+  "description": "Alpha AI Windows Desktop Application",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "electron-store": "^10.1.0"
+  },
+  "devDependencies": {
+    "electron": "^44.4.1",
+    "electron-builder": "^26.0.12"
+  }
+}

@@ -52,8 +52,11 @@ services:
       CHAT_SERVICE: http://chat:8002
       PORT: 8003
       REDIS_URL: redis://redis:6379
+      WORKSPACE_ROOT: /workspace
     ports:
       - "8003:8003"
+    volumes:
+      - ..:/workspace
     depends_on:
       redis:
         condition: service_healthy

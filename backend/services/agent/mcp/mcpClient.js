@@ -1,62 +1,96 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import fs from "node:fs/promises";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
-const mcpServerPath = path.resolve(moduleDirectory, "../../../../mcp-server/src/server.js");
-const clients = new Map();
+const moduleDirectory = path.dirname(
+    fileURLToPath(import.meta.url)
+);
 
-async function getWorkspaceRoot(workspacePath) {
-    if (!workspacePath || typeof workspacePath !== "string") {
-        throw new Error("A VS Code workspace path is required to use coding tools.");
+const mcpServerPath = path.resolve(
+    moduleDirectory,
+    "../../../../mcp-server/src/server.js"
+);
+
+let client = null;
+let transport = null;
+let currentWorkspace = null;
+
+export async function connectMCP(workspacePath = null) {
+    const targetWorkspace = workspacePath ? path.resolve(workspacePath.trim()) : null;
+
+    if (client && transport) {
+        if (!targetWorkspace || currentWorkspace === targetWorkspace) {
+            return client;
+        }
+        // Workspace changed; close previous transport so new server runs with updated WORKSPACE_ROOT
+        try {
+            await transport.close();
+        } catch { }
+        client = null;
+        transport = null;
     }
 
-    const workspaceRoot = path.resolve(workspacePath.trim());
-    const stats = await fs.stat(workspaceRoot);
-    if (!stats.isDirectory()) {
-        throw new Error("The VS Code workspace path must point to a folder.");
-    }
-    return workspaceRoot;
-}
-
-export async function connectMCP(workspacePath) {
-    const workspaceRoot = await getWorkspaceRoot(workspacePath);
-    if (clients.has(workspaceRoot)) return clients.get(workspaceRoot).client;
-
-    const client = new Client({
+    const nextClient = new Client({
         name: "alpha-ai-agent",
         version: "1.0.0",
     });
 
-    const transport = new StdioClientTransport({
-        command: "node",
+    const env = {
+        ...process.env,
+    };
+
+    if (targetWorkspace) {
+        env.WORKSPACE_ROOT = targetWorkspace;
+    }
+
+    const nextTransport = new StdioClientTransport({
+        command: process.execPath,
         args: [mcpServerPath],
         cwd: path.dirname(mcpServerPath),
-        env: { ...process.env, WORKSPACE_ROOT: workspaceRoot },
+        env,
         stderr: "pipe",
     });
 
-    await client.connect(transport);
-    clients.set(workspaceRoot, { client, transport });
-    console.log(`MCP Client connected to workspace: ${workspaceRoot}`);
+    try {
+        await nextClient.connect(nextTransport);
+    } catch (error) {
+        await nextTransport.close().catch(() => { });
+        throw error;
+    }
+
+    client = nextClient;
+    transport = nextTransport;
+    currentWorkspace = targetWorkspace;
+
+    console.log("MCP Client connected for workspace:", targetWorkspace || "default");
+
     return client;
 }
 
-
-export async function getMCPTools(workspacePath) {
+export async function getMCPTools(workspacePath = null) {
     const mcpClient = await connectMCP(workspacePath);
+
     const response = await mcpClient.listTools();
+
     return response.tools;
 }
 
-
-export async function callMCPTool(workspacePath, toolName, toolArguments = {}) {
+export async function callMCPTool(
+    toolName,
+    toolArguments = {},
+    workspacePath = null
+) {
     const mcpClient = await connectMCP(workspacePath);
 
-    if (typeof toolName !== "string" || toolName.trim() === "") {
-        throw new TypeError("toolName must be a non-empty string");
+    if (
+        typeof toolName !== "string" ||
+        toolName.trim() === ""
+    ) {
+        throw new TypeError(
+            "toolName must be a non-empty string"
+        );
     }
 
     return mcpClient.callTool({

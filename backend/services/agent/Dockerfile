@@ -9,7 +9,9 @@ COPY backend/services/agent/package*.json ./services/agent/
 RUN cd services/agent && npm install
 
 COPY backend/services/agent ./services/agent
-COPY mcp-server ./mcp-server
+COPY mcp-server/package*.json /mcp-server/
+RUN cd /mcp-server && npm install
+COPY mcp-server/src /mcp-server/src
 COPY backend/shared ./shared
 
 WORKDIR /app/services/agent
