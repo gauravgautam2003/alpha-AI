@@ -12,8 +12,7 @@ import { spawn } from "node:child_process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const VSCODE_PATH =
-    "C:\\Users\\This PC\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd";
+const VSCODE_PATH = "C:\\Users\\This PC\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe";
 
 let mainWindow = null;
 
@@ -101,7 +100,7 @@ ipcMain.handle(
                     {
                         detached: true,
                         stdio: "ignore",
-                        windowsHide: false,
+                        windowsHide: false
                     }
                 );
 
@@ -145,12 +144,12 @@ ipcMain.handle(
                 VSCODE_PATH,
                 [
                     "--new-window",
-                    normalizedPath
+                    selectedPath
                 ],
                 {
                     detached: true,
                     stdio: "ignore",
-                    windowsHide: false,
+                    windowsHide: false
                 }
             );
 

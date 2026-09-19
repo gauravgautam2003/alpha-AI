@@ -1,7 +1,7 @@
-
 import { ChatGroq } from "@langchain/groq";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatOpenRouter } from "@langchain/openrouter";
+// import { ChatOpenAI } from "@langchain/openai";
+
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -15,9 +15,10 @@ dotenv.config({
 });
 
 // ============================================
+// FREE PLAN
 // GROQ 20B
-// Free tier, routing & classification
 // ============================================
+
 const groqFast = new ChatGroq({
     model: "openai/gpt-oss-20b",
     apiKey: process.env.GROQ_API_KEY,
@@ -26,92 +27,117 @@ const groqFast = new ChatGroq({
 });
 
 // ============================================
+// FREE / GENERAL
 // GROQ 120B
-// Starter & Pro general AI
-// openai/gpt-oss-120b
 // ============================================
+
 const groqVersatile = new ChatGroq({
-    model: "openai/gpt-oss-20b",
+    model: "openai/gpt-oss-120b",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0.3,
     maxTokens: 4096,
 });
 
 // ============================================
-// GEMINI 2.5 FLASH
-// Pro multimodal / resume / PDF
+// FREE
+// GEMINI
 // ============================================
+
 const geminiFlash = new ChatGoogleGenerativeAI({
-    model: "gemini-3.6-flash",
+    model: "gemini-3.8-flash",
     apiKey: process.env.GOOGLE_API_KEY,
     temperature: 0.2,
     maxOutputTokens: 4096,
 });
 
-// ============================================
-// DEEPSEEK
-// Starter & Pro coding
-// ============================================
-const deepseekCoder = new ChatOpenRouter({
-    model: "deepseek/deepseek-chat",
-    apiKey: process.env.OPENROUTER_API_KEY,
-    temperature: 0.15,
-    maxTokens: 6000,
-});
+// ==================================================
+// PAID MODELS
+// ==================================================
+// Razorpay production enable hone ke baad uncomment.
+//
+// STARTER ₹299
+// GPT-5.6 Luna
+//
+// PRO ₹499
+// GPT-5.6 Terra
+//
+// ==================================================
 
-/**
- * Returns the best LLM based on:
- * - Agent type
- * - User subscription plan
- *
- * Plans:
- * free     → Free
- * starter  → ₹299/month
- * pro      → ₹499/month
- */
-export const getModel = (agent, plan = "free") => {
-    const userPlan = String(plan || "free").toLowerCase();
+// import { ChatOpenAI } from "@langchain/openai";
+
+// const starterModel = new ChatOpenAI({
+//     model: "gpt-5.6-luna",
+//     apiKey: process.env.OPENAI_API_KEY,
+//     temperature: 0.2,
+//     maxTokens: 6000,
+// });
+
+// const proModel = new ChatOpenAI({
+//     model: "gpt-5.6-terra",
+//     apiKey: process.env.OPENAI_API_KEY,
+//     temperature: 0.2,
+//     maxTokens: 8000,
+// });
+
+// ============================================
+// MODEL ROUTER
+// ============================================
+
+export const getModel = (
+    agent,
+    plan = "free"
+) => {
+    const userPlan =
+        String(plan || "free").toLowerCase();
 
     // ============================================
     // ROUTER / INTENT
-    // Always use fast model
     // ============================================
-    if (agent === "router" || agent === "intent") {
+
+    if (
+        agent === "router" ||
+        agent === "intent"
+    ) {
         return groqFast;
     }
 
     // ============================================
     // CODING
-    // Always use DeepSeek for coding
     // ============================================
+
     if (agent === "coding") {
-        return deepseekCoder;
+        return groqVersatile;
     }
 
     // ============================================
-    // PDF RAG / IMAGE ANALYSIS
-    // Gemini handles multimodal tasks
+    // IMAGE / PDF
     // ============================================
-    if (agent === "imageAnalyzer" || agent === "pdfRag") {
+
+    if (
+        agent === "imageAnalyzer" ||
+        agent === "pdfRag"
+    ) {
         return geminiFlash;
     }
 
     // ============================================
-    // PRO — ₹499/month
+    // PRO ₹499
     // ============================================
-    if (userPlan === "pro") {
-        switch (agent) {
-            // Best coding model
-            case "coding":
-                return deepseekCoder;
 
-            // Premium document/resume generation
+    if (userPlan === "pro") {
+
+        // Production mein:
+        // return proModel;
+
+        switch (agent) {
+            case "coding":
+                return groqVersatile;
+
             case "resume":
             case "resumeBuilder":
             case "pdf":
                 return geminiFlash;
 
-            // Strong general-purpose model
             case "chat":
             case "ppt":
             case "search":
@@ -121,15 +147,18 @@ export const getModel = (agent, plan = "free") => {
     }
 
     // ============================================
-    // STARTER — ₹299/month
+    // STARTER ₹299
     // ============================================
-    if (userPlan === "starter") {
-        switch (agent) {
-            // Better coding model
-            case "coding":
-                return deepseekCoder;
 
-            // Strong general-purpose AI
+    if (userPlan === "starter") {
+
+        // Production mein:
+        // return starterModel;
+
+        switch (agent) {
+            case "coding":
+                return groqVersatile;
+
             case "chat":
             case "resume":
             case "resumeBuilder":
@@ -146,9 +175,10 @@ export const getModel = (agent, plan = "free") => {
     // ============================================
     // FREE
     // ============================================
+
     switch (agent) {
         case "coding":
-            return deepseekCoder;
+            return groqVersatile;
 
         case "chat":
         case "resume":
@@ -160,4 +190,3 @@ export const getModel = (agent, plan = "free") => {
             return groqFast;
     }
 };
-
