@@ -1,9 +1,5 @@
-import {
-    app,
-    BrowserWindow,
-    dialog,
-    ipcMain
-} from "electron";
+import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { startMCPBridge, stopMCPBridge, startWorkspaceMCP } from "./mcpBridge.js";
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,10 +21,7 @@ function createWindow() {
         show: false,
 
         webPreferences: {
-            preload: path.join(
-                __dirname,
-                "preload.cjs"
-            ),
+            preload: path.join(__dirname, "preload.cjs"),
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false
@@ -49,26 +42,20 @@ function createWindow() {
         }
     );
 
-    mainWindow.loadURL(
-        "http://localhost:4000"
-    );
+    mainWindow.loadURL("http://localhost:4000");
 }
 
 ipcMain.handle(
     "workspace:select",
     async () => {
         if (!mainWindow) {
-            throw new Error(
-                "Electron window is not available."
-            );
+            throw new Error("Electron window is not available.");
         }
 
-        const result =
-            await dialog.showOpenDialog(
+        const result = await dialog.showOpenDialog(
                 mainWindow,
                 {
-                    title:
-                        "Select Alpha AI Workspace",
+                    title: "Select Alpha AI Workspace",
 
                     properties: [
                         "openDirectory"
@@ -76,24 +63,18 @@ ipcMain.handle(
                 }
             );
 
-        if (
-            result.canceled ||
-            result.filePaths.length === 0
-        ) {
+        if (result.canceled || result.filePaths.length === 0) {
             return {
                 canceled: true,
                 path: null
             };
         }
 
-        const selectedPath =
-            result.filePaths[0];
+        const selectedPath = result.filePaths[0];
+        startWorkspaceMCP(selectedPath);
 
         try {
-            const vscodeProcess =
-                spawn(
-                    VSCODE_PATH,
-                    [
+            const vscodeProcess = spawn(VSCODE_PATH,[
                         "--new-window",
                         selectedPath
                     ],
@@ -106,10 +87,7 @@ ipcMain.handle(
 
             vscodeProcess.unref();
         } catch (error) {
-            console.error(
-                "Failed to launch VS Code:",
-                error
-            );
+            console.error("Failed to launch VS Code:",error);
         }
 
         return {
@@ -119,72 +97,66 @@ ipcMain.handle(
     }
 );
 
-ipcMain.handle(
-    "vscode:open",
-    async (
-        _event,
-        workspacePath
-    ) => {
-        if (
-            typeof workspacePath !== "string" ||
-            !workspacePath.trim()
-        ) {
-            throw new Error(
-                "A valid workspace path is required."
-            );
+ipcMain.handle("vscode:open",async (_,workspacePath) => {
+        try {
+            const normalizedPath = typeof workspacePath === "string"
+                    ? workspacePath.trim()
+                    : "";
+
+            if (!normalizedPath) {
+                throw new Error("Workspace path is required.");
+            }
+
+            const vscodeProcess = spawn(VSCODE_PATH,[
+                        "--new-window",
+                        normalizedPath
+                    ],
+                    {
+                        detached: true,
+                        stdio: "ignore",
+                        windowsHide: false
+                    }
+                );
+
+            vscodeProcess.unref();
+
+            return {
+                success: true,
+                path: normalizedPath
+            };
+        } catch (error) {
+            console.error("Failed to open VS Code:",error);
+
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error)
+            };
         }
-
-        const normalizedPath =
-            path.resolve(
-                workspacePath.trim()
-            );
-
-        const vscodeProcess =
-            spawn(
-                VSCODE_PATH,
-                [
-                    "--new-window",
-                    selectedPath
-                ],
-                {
-                    detached: true,
-                    stdio: "ignore",
-                    windowsHide: false
-                }
-            );
-
-        vscodeProcess.unref();
-
-        return {
-            success: true,
-            path: normalizedPath
-        };
     }
 );
 
 app.whenReady().then(() => {
     createWindow();
 
-    app.on(
-        "activate",
-        () => {
-            if (
-                BrowserWindow
-                    .getAllWindows()
-                    .length === 0
-            ) {
+    // Start local WebSocket MCP bridge
+    startMCPBridge(8765);
+
+    app.on("activate", () => {
+            if (BrowserWindow.getAllWindows().length === 0) {
                 createWindow();
             }
         }
     );
 });
 
-app.on(
-    "window-all-closed",
-    () => {
-        if (
-            process.platform !== "darwin"
-        ) {
+app.on("before-quit",() => {
+        // Stop local MCP bridge
+        stopMCPBridge();
+    }
+);
+
+app.on("window-all-closed", () => {
+        if (process.platform !== "darwin") {
             app.quit();
         }
     }

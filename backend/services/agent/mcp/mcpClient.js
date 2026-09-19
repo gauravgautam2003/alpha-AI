@@ -17,19 +17,30 @@ let client = null;
 let transport = null;
 let currentWorkspace = null;
 
-export async function connectMCP(workspacePath = null) {
-    const targetWorkspace = workspacePath ? path.resolve(workspacePath.trim()) : null;
+export async function connectMCP(
+    workspacePath = null
+) {
+    const targetWorkspace =
+        typeof workspacePath === "string" &&
+        workspacePath.trim()
+            ? path.resolve(workspacePath.trim())
+            : null;
 
     if (client && transport) {
-        if (!targetWorkspace || currentWorkspace === targetWorkspace) {
+        if (
+            !targetWorkspace ||
+            currentWorkspace === targetWorkspace
+        ) {
             return client;
         }
-        // Workspace changed; close previous transport so new server runs with updated WORKSPACE_ROOT
+
         try {
             await transport.close();
-        } catch { }
+        } catch {}
+
         client = null;
         transport = null;
+        currentWorkspace = null;
     }
 
     const nextClient = new Client({
@@ -42,21 +53,28 @@ export async function connectMCP(workspacePath = null) {
     };
 
     if (targetWorkspace) {
-        env.WORKSPACE_ROOT = targetWorkspace;
+        env.ALPHA_WORKSPACE_PATH =
+            targetWorkspace;
     }
 
-    const nextTransport = new StdioClientTransport({
-        command: process.execPath,
-        args: [mcpServerPath],
-        cwd: path.dirname(mcpServerPath),
-        env,
-        stderr: "pipe",
-    });
+    const nextTransport =
+        new StdioClientTransport({
+            command: process.execPath,
+            args: [mcpServerPath],
+            cwd: path.dirname(mcpServerPath),
+            env,
+            stderr: "pipe",
+        });
 
     try {
-        await nextClient.connect(nextTransport);
+        await nextClient.connect(
+            nextTransport
+        );
     } catch (error) {
-        await nextTransport.close().catch(() => { });
+        await nextTransport
+            .close()
+            .catch(() => {});
+
         throw error;
     }
 
@@ -64,15 +82,22 @@ export async function connectMCP(workspacePath = null) {
     transport = nextTransport;
     currentWorkspace = targetWorkspace;
 
-    console.log("MCP Client connected for workspace:", targetWorkspace || "default");
+    console.log(
+        "MCP Client connected for workspace:",
+        targetWorkspace || "default"
+    );
 
     return client;
 }
 
-export async function getMCPTools(workspacePath = null) {
-    const mcpClient = await connectMCP(workspacePath);
+export async function getMCPTools(
+    workspacePath = null
+) {
+    const mcpClient =
+        await connectMCP(workspacePath);
 
-    const response = await mcpClient.listTools();
+    const response =
+        await mcpClient.listTools();
 
     return response.tools;
 }
@@ -82,7 +107,8 @@ export async function callMCPTool(
     toolArguments = {},
     workspacePath = null
 ) {
-    const mcpClient = await connectMCP(workspacePath);
+    const mcpClient =
+        await connectMCP(workspacePath);
 
     if (
         typeof toolName !== "string" ||

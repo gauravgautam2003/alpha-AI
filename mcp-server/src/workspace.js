@@ -1,25 +1,30 @@
-import "dotenv/config";
 import path from "node:path";
 
-const WORKSPACE_ROOT = process.env.WORKSPACE_ROOT;
+let workspaceRoot = null;
 
-if (!WORKSPACE_ROOT) {
-    throw new Error("WORKSPACE_ROOT is required");
-}
-
-export function resolveWorkspacePath(filePath) {
-    const absoluteRoot = path.resolve(WORKSPACE_ROOT);
-    const absolutePath = path.resolve(absoluteRoot, filePath);
-
-    if (
-        absolutePath !== absoluteRoot &&
-        !absolutePath.startsWith(absoluteRoot + path.sep)
-    ) {
-        throw new Error("Access denied: path is outside workspace");
+export function setWorkspaceRoot(rootPath) {
+    if (typeof rootPath !== "string" || !rootPath.trim()) {
+        throw new Error("A valid workspace path is required.");
     }
 
-    return absolutePath;
+    workspaceRoot = path.resolve(rootPath.trim());
+    return workspaceRoot;
 }
 
-export { WORKSPACE_ROOT };
+export function getWorkspaceRoot() {
+    if (!workspaceRoot) {
+        throw new Error("Workspace root has not been selected.");
+    }
+    return workspaceRoot;
+}
 
+export function resolveWorkspacePath(filePath = "") {
+    const root = getWorkspaceRoot();
+
+    const absolutePath = path.resolve(root, filePath);
+
+    if (absolutePath !== root && !absolutePath.startsWith(root + path.sep)) {
+        throw new Error("Access denied: path is outside workspace");
+    }
+    return absolutePath;
+}

@@ -5,21 +5,14 @@ export function getWorkspacePath() {
 }
 
 export function setWorkspacePath(workspacePath) {
-    const normalizedPath =
-        typeof workspacePath === "string"
-            ? workspacePath.trim()
-            : "";
+    const normalizedPath = typeof workspacePath === "string" ? workspacePath.trim() : "";
 
     if (!normalizedPath) {
         localStorage.removeItem(STORAGE_KEY);
         return "";
     }
 
-    localStorage.setItem(
-        STORAGE_KEY,
-        normalizedPath
-    );
-
+    localStorage.setItem(STORAGE_KEY, normalizedPath);
     return normalizedPath;
 }
 

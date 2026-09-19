@@ -10,7 +10,8 @@
     "build": "electron-builder"
   },
   "dependencies": {
-    "electron-store": "^10.1.0"
+    "electron-store": "^10.1.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "electron": "^44.4.1",
