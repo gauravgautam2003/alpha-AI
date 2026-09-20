@@ -28,6 +28,19 @@ const BLOCKED_ARGUMENTS = [
     "restart-computer",
 ];
 
+function resolveCommandInvocation(command, args) {
+    // npm/npx are .cmd shims on Windows. execFile cannot run a .cmd file
+    // directly, so invoke it through cmd.exe with already-validated arguments.
+    if (process.platform === "win32" && (command === "npm" || command === "npx")) {
+        return {
+            executable: process.env.ComSpec || "cmd.exe",
+            args: ["/d", "/s", "/c", `${command} ${args.join(" ")}`],
+        };
+    }
+
+    return { executable: command, args };
+}
+
 
 export function registerTerminalTools(server) {
 
@@ -87,6 +100,14 @@ export function registerTerminalTools(server) {
                     }
                 }
 
+                if (
+                    process.platform === "win32" &&
+                    (command === "npm" || command === "npx") &&
+                    args.some((arg) => /[&|<>()^%!]/.test(arg))
+                ) {
+                    throw new Error("Windows shell control characters are not allowed in npm/npx arguments");
+                }
+
 
                 // ------------------------------------------
                 // Resolve workspace
@@ -100,10 +121,12 @@ export function registerTerminalTools(server) {
                 // Execute command
                 // ------------------------------------------
 
+                const invocation = resolveCommandInvocation(command, args);
+
                 const { stdout, stderr } =
                     await execFileAsync(
-                        command,
-                        args,
+                        invocation.executable,
+                        invocation.args,
                         {
                             cwd: workingDirectory,
                             timeout: 30000,

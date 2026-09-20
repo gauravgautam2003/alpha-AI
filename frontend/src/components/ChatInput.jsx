@@ -301,7 +301,9 @@ function ChatInput() {
 
             setRequestError(
                 serverMessage ||
-                "Message could not be sent. Please check that the gateway and agent services are running."
+                error.response?.statusText ||
+                error.message ||
+                "Message could not be sent."
             );
 
         } finally {

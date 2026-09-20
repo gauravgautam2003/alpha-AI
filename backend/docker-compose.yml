@@ -52,6 +52,7 @@ services:
       PORT: 8003
       REDIS_URL: redis://redis:6379
       WORKSPACE_ROOT: /workspace
+      MCP_BRIDGE_URL: ws://host.docker.internal:8765
     ports:
       - "8003:8003"
     volumes:
