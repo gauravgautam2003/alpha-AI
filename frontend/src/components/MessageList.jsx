@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'motion/react';
 import LoadingAnimation from './LoadingAnimation';
 import { setValue } from '../redux/uiSlice';
+import DownloadDesktopButton from './DownloadDesktopButton';
 
 
 function MessageArea() {
@@ -23,13 +24,18 @@ function MessageArea() {
     }, [messages.length, isLoading]);
 
     return (
-        <div ref={messageContainerRef} className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 py-4 space-y-2'>
+        <div ref={messageContainerRef} className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 space-y-2 '>
             {messages.length == 0 || !selectedConversation ? (
                 <>
-                    <div className='min-h-[290px] flex flex-col items-center justify-center gap-5 text-center'>
+                    <div className='min-h-[300px] flex flex-col items-center justify-center gap-5 text-center'>
                         <div className='mirror-surface flex items-center justify-center w-16 h-16 rounded-[1.35rem] text-sky-700'>
                             <span className='text-2xl'>✦</span>
                         </div>
+                            
+                            <div className='hidden lg:flex'>
+                                <DownloadDesktopButton />
+                            </div>
+
                         <div className='flex flex-col gap-2'>
                             <p className='text-[11px] font-bold uppercase tracking-[0.24em] text-sky-500'>Your intelligent workspace</p>
                             <h1 className='text-2xl md:text-[28px] font-semibold text-sky-950 tracking-tight'>What shall we create today?</h1>
@@ -44,6 +50,7 @@ function MessageArea() {
                             ))}
 
                         </div>
+
                     </div>
                 </>
             ) : (

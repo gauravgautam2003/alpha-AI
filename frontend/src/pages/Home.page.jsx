@@ -235,7 +235,8 @@ const Home = () => {
                                             </button>
                                         </motion.form>
                                     </AnimatePresence>
-                                </>}
+                                </>
+                                }
                                 <p className='mt-6 text-center text-[11px] leading-5 text-slate-500'>By continuing, you agree to Alpha AI's terms and acknowledge its privacy policy.</p>
                             </motion.div>
                         </div>
