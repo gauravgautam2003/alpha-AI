@@ -27,7 +27,7 @@ function MessageArea() {
         <div ref={messageContainerRef} className='chat-scrollbar flex-1 overflow-y-auto px-4 md:px-8 space-y-2 '>
             {messages.length == 0 || !selectedConversation ? (
                 <>
-                    <div className='min-h-[300px] flex flex-col items-center justify-center gap-5 text-center'>
+                    <div className='min-h-[300px] my-12 flex flex-col items-center justify-center gap-5 text-center'>
                         <div className='mirror-surface flex items-center justify-center w-16 h-16 rounded-[1.35rem] text-sky-700'>
                             <span className='text-2xl'>✦</span>
                         </div>
