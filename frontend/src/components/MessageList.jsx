@@ -39,18 +39,8 @@ function MessageArea() {
                         <div className='flex flex-col gap-2'>
                             <p className='text-[11px] font-bold uppercase tracking-[0.24em] text-sky-500'>Your intelligent workspace</p>
                             <h1 className='text-2xl md:text-[28px] font-semibold text-sky-950 tracking-tight'>What shall we create today?</h1>
-                            <p className='text-[13px] text-slate-500 max-w-[320px] leading-relaxed mx-auto'>Explore ideas, write code, research a topic, or turn an outline into something useful.</p>
+                            <p className='text-[13px] text-slate-500 max-w-[450px] leading-relaxed mx-auto'>Explore ideas, write code, research a topic, or turn an outline into something useful.</p>
                         </div>
-                        <div className='max-w-2xl mx-auto flex flex-wrap justify-center gap-2.5'>
-                            {
-                            ["Create a Netflix clone", "Build a modern dashboard", "Help me plan a project"].map((s, idx) => (
-                                <button key={s || idx} type='button' onClick={() => dispatch(setValue(s))} className='glass-button text-[13px] text-slate-600 px-3.5 py-2 rounded-xl transition-colors duration-150 cursor-pointer'>
-                                    {s}
-                                </button>
-                            ))}
-
-                        </div>
-
                     </div>
                 </>
             ) : (
