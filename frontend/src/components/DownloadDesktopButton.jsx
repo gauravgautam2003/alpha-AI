@@ -24,6 +24,11 @@ const DownloadDesktopButton = () => {
 
         // Start download
         window.location.href = DOWNLOAD_URL;
+
+        // Enable again after a few seconds
+        setTimeout(() => {
+            setDownloaded(false);
+        }, 5000);
     };
 
     const handleGithub = () => {
@@ -38,11 +43,10 @@ const DownloadDesktopButton = () => {
                 type="button"
                 onClick={handleDownload}
                 disabled={downloaded}
-                className={`flex items-center gap-4 mirror-surface py-3 px-4 rounded-lg font-extrabold tracking-[0.24em] transition-colors duration-150 ${
-                    downloaded
+                className={`flex items-center gap-4 mirror-surface py-3 px-4 rounded-lg font-extrabold tracking-[0.24em] transition-colors duration-150 ${downloaded
                         ? "cursor-not-allowed text-green-400 opacity-70"
                         : "text-sky-400 hover:text-sky-300"
-                }`}
+                    }`}
             >
                 {downloaded ? (
                     <LuCheck size={18} />
