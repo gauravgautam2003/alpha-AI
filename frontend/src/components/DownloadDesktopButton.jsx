@@ -1,33 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { LuDownload, LuGithub, LuInfo, LuCheck } from "react-icons/lu";
 
 const DOWNLOAD_URL = "https://github.com/gauravgautam2003/alpha-AI/releases/download/v1.0.1/Alpha.AI.Setup.1.0.1.exe";
 const GITHUB_URL = "https://github.com/gauravgautam2003/alpha-AI";
 const APP_VERSION = "v1.0.1";
 
-const DOWNLOAD_STORAGE_KEY = `alpha-ai-downloaded-${APP_VERSION}`;
-
 const DownloadDesktopButton = () => {
-
-    const [downloaded, setDownloaded] = useState(false);
-
-    // Check download status when component loads
-    useEffect(() => {
-        const alreadyDownloaded = localStorage.getItem(DOWNLOAD_STORAGE_KEY) === "true";
-        setDownloaded(alreadyDownloaded);
-    }, []);
+    const [downloading, setDownloading] = useState(false);
 
     const handleDownload = () => {
-        // Mark as downloaded
-        localStorage.setItem(DOWNLOAD_STORAGE_KEY, "true");
-        setDownloaded(true);
+        // Temporarily disable the button
+        setDownloading(true);
 
         // Start download
         window.location.href = DOWNLOAD_URL;
 
-        // Enable again after a few seconds
+        // Enable the button again after 5 seconds
         setTimeout(() => {
-            setDownloaded(false);
+            setDownloading(false);
         }, 5000);
     };
 
@@ -42,20 +32,20 @@ const DownloadDesktopButton = () => {
             <button
                 type="button"
                 onClick={handleDownload}
-                disabled={downloaded}
-                className={`flex items-center gap-4 mirror-surface py-3 px-4 rounded-lg font-extrabold tracking-[0.24em] transition-colors duration-150 ${downloaded
+                disabled={downloading}
+                className={`flex items-center gap-4 mirror-surface py-3 px-4 rounded-lg font-extrabold tracking-[0.24em] transition-colors duration-150 ${downloading
                         ? "cursor-not-allowed text-green-400 opacity-70"
                         : "text-sky-400 hover:text-sky-300"
                     }`}
             >
-                {downloaded ? (
+                {downloading ? (
                     <LuCheck size={18} />
                 ) : (
                     <LuDownload size={18} />
                 )}
 
-                {downloaded
-                    ? "Downloaded"
+                {downloading
+                    ? "Download Started"
                     : "Download for Windows"}
             </button>
 
