@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { LuDownload, LuGithub, LuInfo, LuCheck } from "react-icons/lu";
 
-const DOWNLOAD_URL = "https://github.com/gauravgautam2003/alpha-AI/releases/download/v1.0.1/Alpha.AI.Setup.1.0.1.exe";
+const DOWNLOAD_URL = "https://github.com/gauravgautam2003/alpha-AI/releases/download/v1.0.1/Alpha.AI.Setup.1.0.0.exe";
 const GITHUB_URL = "https://github.com/gauravgautam2003/alpha-AI";
 const APP_VERSION = "v1.0.1";
 
