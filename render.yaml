@@ -12,7 +12,6 @@ services:
     region: oregon
     dockerfilePath: ./backend/services/auth/Dockerfile
     dockerContext: ./backend
-    healthCheckPath: /
     envVars:
       - key: PORT
         value: "8001"
@@ -35,7 +34,6 @@ services:
     region: oregon
     dockerfilePath: ./backend/services/chat/Dockerfile
     dockerContext: ./backend
-    healthCheckPath: /
     envVars:
       - key: PORT
         value: "8002"
@@ -54,7 +52,6 @@ services:
     region: oregon
     dockerfilePath: ./backend/services/agent/Dockerfile
     dockerContext: .
-    healthCheckPath: /
     envVars:
       - key: PORT
         value: "8003"
@@ -103,7 +100,6 @@ services:
     region: oregon
     dockerfilePath: ./backend/services/billing/Dockerfile
     dockerContext: ./backend
-    healthCheckPath: /
     envVars:
       - key: PORT
         value: "8004"
