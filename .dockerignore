@@ -10,6 +10,10 @@
 .env
 .env.*
 !*.env.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
 **/serviceAccountKey.json
 **/service-account*.json
 **/firebase-service-account*.json

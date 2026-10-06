@@ -13,14 +13,14 @@ services:
     region: oregon
 
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerContext: .
 
-    healthCheckPath: /health
+    healthCheckPath: /
 
     envVars:
 
       - key: PORT
-        value: "8000"
+        value: "10000"
 
       # Internal services
       - key: AUTH_SERVICE
