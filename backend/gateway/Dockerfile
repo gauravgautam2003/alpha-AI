@@ -1,11 +1,11 @@
-FROM node
+FROM node:22
 
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
-COPY ./gateway/package*.json ./gateway/
+COPY gateway/package*.json ./gateway/
 RUN cd gateway && npm install
 
 COPY gateway ./gateway
@@ -15,4 +15,4 @@ WORKDIR /app/gateway
 
 EXPOSE 8000
 
-CMD [ "npm", "start" ]
+CMD ["npm", "start"]

@@ -8,17 +8,12 @@ import mongoose from "mongoose";
                 */
 
 async function connectDB() {
-    try {
-        if (!process.env.MONGODB_URI) {
-            console.log("Please add your database string!");
-        }
-
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("database connected successfully:✅");
-
-    } catch (error) {
-        console.log("invalid database string:❌", error);
+    if (!process.env.MONGODB_URI) {
+        throw new Error("MONGODB_URI environment variable is required");
     }
+
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("database connected successfully:✅");
 }
 
 export default connectDB

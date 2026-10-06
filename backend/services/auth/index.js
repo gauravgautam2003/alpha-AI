@@ -21,7 +21,8 @@ app.get("/", (req, res) => {
     })
 })
 
-app.listen(PORT, async function () {
-    await connectDB();
+await connectDB();
+
+app.listen(PORT, function () {
     console.log(`auth server is running on port: ${PORT}`);
 })

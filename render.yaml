@@ -1,0 +1,164 @@
+services:
+  - type: keyvalue
+    name: alpha-ai-redis
+    plan: 256mb
+    region: oregon
+    ipAllowList: []
+
+  - type: pserv
+    name: alpha-ai-auth
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./backend/services/auth/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8001"
+      - key: MONGODB_URI
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: alpha-ai-redis
+          property: connectionString
+      - key: SMTP_URL
+        sync: false
+
+  - type: pserv
+    name: alpha-ai-chat
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./backend/services/chat/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8002"
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: alpha-ai-redis
+          property: connectionString
+
+  - type: pserv
+    name: alpha-ai-agent
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./backend/services/agent/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8003"
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: alpha-ai-redis
+          property: connectionString
+      - key: AUTH_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-auth
+          property: hostport
+      - key: CHAT_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-chat
+          property: hostport
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+
+  - type: pserv
+    name: alpha-ai-billing
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./backend/services/billing/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8004"
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: alpha-ai-redis
+          property: connectionString
+      - key: AUTH_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-auth
+          property: hostport
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+  - type: web
+    name: alpha-ai-gateway
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./backend/gateway/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: AUTH_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-auth
+          property: hostport
+      - key: CHAT_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-chat
+          property: hostport
+      - key: AGENT_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-agent
+          property: hostport
+      - key: BILLING_SERVICE
+        fromService:
+          type: pserv
+          name: alpha-ai-billing
+          property: hostport
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: alpha-ai-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false

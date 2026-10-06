@@ -1,15 +1,6 @@
 **/node_modules
-**/dist
-**/build
-**/.vite
-.git
-.vscode
-.agents
-.codex
-*.log
-.env
-.env.*
-!*.env.example
+**/.env
+**/.env.*
 **/serviceAccountKey.json
 **/service-account*.json
 **/firebase-service-account*.json

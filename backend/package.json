@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/billing.test.js tests/agent.test.js tests/auth.test.js",
+    "test": "node --test tests/billing.test.js tests/agent.test.js tests/auth.test.js tests/serviceUrl.test.js",
     "test:billing": "node --test tests/billing.test.js",
     "test:agent": "node --test tests/agent.test.js",
     "test:auth": "node --test tests/auth.test.js"

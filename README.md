@@ -240,6 +240,16 @@ WORKSPACE_ROOT=c:/Users/This PC/OneDrive/Desktop/PROJECTS/ALPHA AI
 
 ---
 
+## 🚀 Deploying the backend on Render
+
+The repository-root `render.yaml` Blueprint creates the public gateway, four private Docker services, and a private Render Key Value instance. In Render, create a new Blueprint from this repository and select `render.yaml`. The services use paid `0.5c-512mb` compute plans and a `256mb` Key Value plan, so check Render's current pricing before applying the Blueprint.
+
+During the first Blueprint sync, provide the requested secrets in Render (do not commit them): `MONGODB_URI` for each backend service, `FIREBASE_SERVICE_ACCOUNT_JSON` for auth (the full service-account JSON), the agent provider/search/storage keys, Razorpay keys, and `FRONTEND_URL` for the deployed frontend origin. Configure `SMTP_URL` if OTP email is enabled. Allow the Render services' outbound IPs in your MongoDB provider's network access rules. Redis is wired automatically through Render's private network.
+
+Deploy the frontend separately and set its `VITE_SERVER_URL` to the public gateway URL, for example `https://alpha-ai-gateway.onrender.com`. The cloud agent runs the bundled MCP server inside its container; it cannot access a developer's local desktop workspace or `host.docker.internal`.
+
+---
+
 ## 🛡️ Security & Production Best Practices
 
 1. **HMAC Signature Verification**: Razorpay verification is computed server-side using `sha256` and verified secrets.

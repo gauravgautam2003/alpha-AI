@@ -19,7 +19,8 @@ app.get("/", (req, res) => {
     })
 })
 
+await connectDB();
+
 app.listen(PORT, function () {
-    connectDB();
     console.log(`chat server is running on port: ${PORT}`);
 })

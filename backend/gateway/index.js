@@ -7,9 +7,14 @@ import cookieParser from "cookie-parser";
 import { proxyWithHeader } from "./utils/proxyWithHeader.js";
 import { getCurrentUser } from "./controllers/user.controller.js";
 import morgan from "morgan";
+import { normalizeServiceUrl } from "../shared/serviceUrl.js";
 const port = process.env.PORT || 8000;
 
 const app = express();
+const authService = normalizeServiceUrl(process.env.AUTH_SERVICE, "AUTH_SERVICE");
+const chatService = normalizeServiceUrl(process.env.CHAT_SERVICE, "CHAT_SERVICE");
+const agentService = normalizeServiceUrl(process.env.AGENT_SERVICE, "AGENT_SERVICE");
+const billingService = normalizeServiceUrl(process.env.BILLING_SERVICE, "BILLING_SERVICE");
 
 //prebuild middleware
 
@@ -22,11 +27,11 @@ app.use(cors({
     credentials: true
 }))
 
-app.use("/api/auth", proxy(process.env.AUTH_SERVICE))
-app.use("/api/chat", protect, proxyWithHeader(process.env.CHAT_SERVICE));
+app.use("/api/auth", proxy(authService))
+app.use("/api/chat", protect, proxyWithHeader(chatService));
 app.use("/api/me", protect, getCurrentUser);
-app.use("/api/agent", protect, proxyWithHeader(process.env.AGENT_SERVICE))
-app.use("/api/billing", protect, proxyWithHeader(process.env.BILLING_SERVICE));
+app.use("/api/agent", protect, proxyWithHeader(agentService))
+app.use("/api/billing", protect, proxyWithHeader(billingService));
 
 
 app.get("/", (req, res) => {
