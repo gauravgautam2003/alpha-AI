@@ -1,160 +1,99 @@
 services:
+
   - type: keyvalue
     name: alpha-ai-redis
-    plan: 256mb
+    plan: free
     region: oregon
     ipAllowList: []
 
-  - type: pserv
-    name: alpha-ai-auth
+  - type: web
+    name: alpha-ai-backend
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: oregon
-    dockerfilePath: ./backend/services/auth/Dockerfile
+
+    dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
+
+    healthCheckPath: /health
+
     envVars:
+
       - key: PORT
-        value: "8001"
-      - key: MONGODB_URI
-        sync: false
-      - key: FIREBASE_SERVICE_ACCOUNT_JSON
-        sync: false
+        value: "8000"
+
+      # Internal services
+      - key: AUTH_SERVICE
+        value: http://127.0.0.1:8001
+
+      - key: CHAT_SERVICE
+        value: http://127.0.0.1:8002
+
+      - key: AGENT_SERVICE
+        value: http://127.0.0.1:8003
+
+      - key: BILLING_SERVICE
+        value: http://127.0.0.1:8004
+
+      # Redis
       - key: REDIS_URL
         fromService:
           type: keyvalue
           name: alpha-ai-redis
           property: connectionString
+
+      # MongoDB
+      - key: MONGODB_URI
+        sync: false
+
+      # Firebase
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+
+      # Email
       - key: SMTP_URL
         sync: false
 
-  - type: pserv
-    name: alpha-ai-chat
-    runtime: docker
-    plan: 0.5c-512mb
-    region: oregon
-    dockerfilePath: ./backend/services/chat/Dockerfile
-    dockerContext: ./backend
-    envVars:
-      - key: PORT
-        value: "8002"
-      - key: MONGODB_URI
-        sync: false
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: alpha-ai-redis
-          property: connectionString
-
-  - type: pserv
-    name: alpha-ai-agent
-    runtime: docker
-    plan: 0.5c-512mb
-    region: oregon
-    dockerfilePath: ./backend/services/agent/Dockerfile
-    dockerContext: .
-    envVars:
-      - key: PORT
-        value: "8003"
-      - key: MONGODB_URI
-        sync: false
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: alpha-ai-redis
-          property: connectionString
-      - key: AUTH_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-auth
-          property: hostport
-      - key: CHAT_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-chat
-          property: hostport
+      # AI
       - key: GROQ_API_KEY
         sync: false
+
       - key: GOOGLE_API_KEY
         sync: false
+
       - key: OPENROUTER_API_KEY
         sync: false
-      - key: TAVILY_API_KEY
-        sync: false
+
       - key: OPENAI_API_KEY
         sync: false
+
+      - key: TAVILY_API_KEY
+        sync: false
+
+      # Cloudinary
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
+
       - key: CLOUDINARY_API_KEY
         sync: false
+
       - key: CLOUDINARY_API_SECRET
         sync: false
+
+      # RAG
       - key: QDRANT_URL
         sync: false
+
       - key: QDRANT_API_KEY
         sync: false
 
-  - type: pserv
-    name: alpha-ai-billing
-    runtime: docker
-    plan: 0.5c-512mb
-    region: oregon
-    dockerfilePath: ./backend/services/billing/Dockerfile
-    dockerContext: ./backend
-    envVars:
-      - key: PORT
-        value: "8004"
-      - key: MONGODB_URI
-        sync: false
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: alpha-ai-redis
-          property: connectionString
-      - key: AUTH_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-auth
-          property: hostport
+      # Razorpay
       - key: RAZORPAY_KEY_ID
         sync: false
+
       - key: RAZORPAY_KEY_SECRET
         sync: false
 
-  - type: web
-    name: alpha-ai-gateway
-    runtime: docker
-    plan: 0.5c-512mb
-    region: oregon
-    dockerfilePath: ./backend/gateway/Dockerfile
-    dockerContext: ./backend
-    healthCheckPath: /
-    envVars:
-      - key: PORT
-        value: "8000"
-      - key: AUTH_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-auth
-          property: hostport
-      - key: CHAT_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-chat
-          property: hostport
-      - key: AGENT_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-agent
-          property: hostport
-      - key: BILLING_SERVICE
-        fromService:
-          type: pserv
-          name: alpha-ai-billing
-          property: hostport
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: alpha-ai-redis
-          property: connectionString
+      # Frontend
       - key: FRONTEND_URL
         sync: false
