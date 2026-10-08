@@ -42,12 +42,7 @@ function getRetryDelay(error) {
     const match = String(error?.message || "")
         .match(/try again in\s+([\d.]+)s/i);
 
-    return match
-        ? Math.min(
-            Math.ceil(Number(match[1]) * 1000) + 500,
-            MAX_RETRY_DELAY_MS
-        )
-        : DEFAULT_RETRY_DELAY_MS;
+    return match ? Math.min( Math.ceil(Number(match[1]) * 1000) + 500, MAX_RETRY_DELAY_MS ) : DEFAULT_RETRY_DELAY_MS;
 }
 
 function withRateLimitRetry(model) {
@@ -101,7 +96,7 @@ const groqVersatile = withRateLimitRetry(new ChatGroq({
     model: "openai/gpt-oss-120b",
     apiKey: process.env.GROQ_API_KEY,
     temperature: 0.3,
-    maxTokens: 4096,
+    maxTokens: 30096,
 }));
 
 // ============================================
@@ -153,17 +148,13 @@ export const getModel = (
     agent,
     plan = "free"
 ) => {
-    const userPlan =
-        String(plan || "free").toLowerCase();
+    const userPlan = String(plan || "free").toLowerCase();
 
     // ============================================
     // ROUTER / INTENT
     // ============================================
 
-    if (
-        agent === "router" ||
-        agent === "intent"
-    ) {
+    if (agent === "router" || agent === "intent") {
         return groqFast;
     }
 
@@ -179,10 +170,7 @@ export const getModel = (
     // IMAGE / PDF
     // ============================================
 
-    if (
-        agent === "imageAnalyzer" ||
-        agent === "pdfRag"
-    ) {
+    if (agent === "imageAnalyzer" || agent === "pdfRag") {
         return geminiFlash;
     }
 

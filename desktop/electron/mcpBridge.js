@@ -205,7 +205,7 @@ export function startMCPBridge(
 
     websocketServer =
         new WebSocketServer({
-            host: "127.0.0.1",
+            host: "0.0.0.0",
             port
         });
 
@@ -367,7 +367,7 @@ export function startMCPBridge(
     );
 
     console.log(
-        `MCP bridge listening on ws://127.0.0.1:${port}`
+        `MCP bridge listening on ws://0.0.0.0:${port}`
     );
 
     heartbeatTimer = setInterval(

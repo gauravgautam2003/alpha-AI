@@ -193,6 +193,14 @@ cd frontend && npm run dev
 cd desktop && npm start
 ```
 
+### 3. Connect the Docker agent to the desktop workspace
+
+Start the desktop app and select a workspace before using the agent. The desktop
+MCP bridge listens on port `8765` so the agent container can reach it through
+`host.docker.internal`. The bridge exposes local workspace and terminal tools;
+keep this development setup on a trusted network and allow inbound port `8765`
+only from Docker in your host firewall.
+
 ---
 
 ## 🔐 Environment Variables Configuration
@@ -235,7 +243,7 @@ REDIS_URL=redis://localhost:6379
 
 ### MCP Server (`mcp-server/.env`)
 ```env
-WORKSPACE_ROOT=c:/Users/This PC/OneDrive/Desktop/PROJECTS/ALPHA AI
+ALPHA_WORKSPACE_PATH=c:/Users/This PC/OneDrive/Desktop/PROJECTS/ALPHA AI
 ```
 
 ---

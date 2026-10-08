@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -8,11 +9,12 @@ import { registerGitTools } from "./tools/gitTools.js";
 
 import { setWorkspaceRoot } from "./workspace.js";
 
-const workspacePath = process.env.ALPHA_WORKSPACE_PATH;
+const workspacePath =
+    process.env.ALPHA_WORKSPACE_PATH || process.env.WORKSPACE_ROOT;
 
 if (!workspacePath) {
     throw new Error(
-        "ALPHA_WORKSPACE_PATH is required."
+        "ALPHA_WORKSPACE_PATH (or WORKSPACE_ROOT) is required."
     );
 }
 
