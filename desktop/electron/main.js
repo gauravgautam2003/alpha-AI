@@ -140,7 +140,7 @@ app.whenReady().then(() => {
     createWindow();
 
     // Start local WebSocket MCP bridge
-    startMCPBridge(8765);
+    startMCPBridge(18765);
 
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) {

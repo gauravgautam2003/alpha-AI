@@ -196,9 +196,9 @@ cd desktop && npm start
 ### 3. Connect the Docker agent to the desktop workspace
 
 Start the desktop app and select a workspace before using the agent. The desktop
-MCP bridge listens on port `8765` so the agent container can reach it through
+MCP bridge listens on port `18765` so the agent container can reach it through
 `host.docker.internal`. The bridge exposes local workspace and terminal tools;
-keep this development setup on a trusted network and allow inbound port `8765`
+keep this development setup on a trusted network and allow inbound port `18765`
 only from Docker in your host firewall.
 
 ---

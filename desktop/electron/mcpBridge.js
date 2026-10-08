@@ -197,7 +197,7 @@ function broadcastMCPMessage(
 }
 
 export function startMCPBridge(
-    port = 8765
+    port = 18765
 ) {
     if (websocketServer) {
         return websocketServer;
@@ -363,11 +363,20 @@ export function startMCPBridge(
                 "MCP bridge server error:",
                 error
             );
+
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+            websocketServer = null;
         }
     );
 
-    console.log(
-        `MCP bridge listening on ws://0.0.0.0:${port}`
+    websocketServer.on(
+        "listening",
+        () => console.log(
+            `MCP bridge listening on ws://0.0.0.0:${port}`
+        )
     );
 
     heartbeatTimer = setInterval(
